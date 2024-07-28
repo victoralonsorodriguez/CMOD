@@ -81,6 +81,15 @@ create_constraints(file=constraints_file,
 # closing the constraints file
 constraints_file.close()
 
+# OTHER UTILITIES
+# Create a folder to store the csv files
+
+csv_folder = f'{galaxy}_csv'
+if os.path.isdir(csv_folder) == True:
+    
+    shutil.rmtree(f'{cwd}/{csv_folder}')
+
+os.mkdir(csv_folder)
 
 # STARTING THE PROCCESS
 
@@ -131,15 +140,15 @@ for file in sorted(os.listdir(cwd)):
         output_path = f'./{fits_name}'
 
         # Export dataframe to text file
-        csv_file = open(f'{output_path}/{fits_name}_galfit_output.csv','w+')
+        csv_file = open(f'./{fits_name}_galfit_output.csv','w+')
         
 
 
         #------ANALYSING EACH FRAME OF THE DATA CUBE-----#
     
         # loop for all frames layers that form the fits file
-        for sub_frame_index in range(0,int(z_max/z_step)+1):
-        #for sub_frame_index in range(0,2): # this range just to do a quick check
+        #for sub_frame_index in range(0,int(z_max/z_step)+1):
+        for sub_frame_index in range(0,2): # this range just to do a quick check
 
             # obtaining a frame of the fits
             sub_frame = img_flux[sub_frame_index]
@@ -342,11 +351,16 @@ for file in sorted(os.listdir(cwd)):
         #----ORGANIZING ALL THE CREATED FILES INTO NEW FOLRDES----#
         
         # moving all the output and created files to a folder in order to keep the order in the directory        
-        for output_file in os.listdir():
+        for output_file in sorted(os.listdir()):
 
-            if output_file.endswith('.py')==False and ('galfit.' in output_file or '_galfit_output' in output_file or 'fit.' in output_file or 'temporal' in output_file):
+            if '.csv' in output_file:
+
+                shutil.copyfile(f'./{output_file}',f'./{csv_folder}/{output_file}')
+
+            if '.py' not in output_file and ('galfit.' in output_file or '_galfit_output' in output_file or 'fit.' in output_file or 'temporal' in output_file):
                 
                 os.replace(f'./{output_file}', f'./{fits_name}/{output_file}')
+
         
         # copy the original fits file to the new folder
         shutil.copyfile(f'./{file}',f'./{fits_name}/{file}')
