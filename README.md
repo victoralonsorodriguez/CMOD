@@ -1,2 +1,2 @@
-# CMOD
-Ths repository contains the codes created to study the CMOD effect from a paractical point of view
+# CSV files branch
+On this branch I will develope the code to move the csv files generated for evey filter to the main directory
