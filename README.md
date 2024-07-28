@@ -4,12 +4,13 @@ Ths repository contains the codes created to study the CMOD effect from a paract
 
 The main branch contains the final files of every development branch correponding to each new version. 
 
-There are four modes of analysis
+There are four modes of analysis:
 
     - 'original': it was the first mode developed. It is the less accurate
     - 'medfilt': each image is comvolved with a median filter to reduce noise
     - 'inout': the initial parameters for an image are the output parameters of previous image
     - 'medfilt_inout': is the combination of the 'medfilt' and 'inout' versions. It is the most accurate
+
 
 ## Version change log
 
@@ -21,7 +22,7 @@ This version has a new automatic shell script. Instead of four different shell s
 
 This version simplify the files required to execute the different versions of the code. With this version all the diferent modes of analysis are contained in the same file 'py_galfit_3D.py'. To execute the modes it is neccessary to indicate them as an argument in the comment line. For example, to run the original mode it should be as 'python3 py_galfit_3D.py original'. If no argument is given, the default mode is the 'medfilt_version' since is the most accurate mode. 
 
-### Version 2.02 - plots_from_csv_folder
+### Version 2.02 - plots_from_csv_folder branch
 
 Now the plots are created from the csv folder for each galaxy. New plots of the magnitude along with the Sérsic Index and Effective Radiud are created. Also the center position along with the Axis Ratio and the Position Angle.
 
