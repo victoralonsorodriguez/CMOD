@@ -3,7 +3,7 @@
 # the galfit analisys of each galaxy
 
 # Creating the large psf
-#python3 py_psf.py
+python3 py_psf.py
 
 # Version to run: original, medfilt
 # inout or medfilt_ionut (default)
