@@ -126,6 +126,10 @@ galaxy = cwd.split('/')[-1].split('_')[0]
 psf = cwd.split('/')[-1].split('_')[2]
 version = cwd.split('/')[-1].split('_')[-1]
 
+# csv file folder where obtain the data
+csv_folder = f'{galaxy}_csv'
+csv_folder_path = f'{cwd}/{csv_folder}'
+
 # The names of the filter systems in alphabetic order
 # Dictionary with the corresponding wavelenght of each filter
 # http://svo2.cab.inta-csic.es/theory/fps/               
@@ -135,31 +139,27 @@ filter_system_names,filter_wavelenght_dict,filter_names_dict = filter_wl_dict()
 filter_name_list = []
 file_path_list = []
 
-# walking thorught the tree directory
-for (dirpath, dirnames, filenames) in os.walk(cwd):
-
-    # sorting the filters directories in alhpabetical order
-    dirnames.sort()
-    for subdir in dirnames:
-        
-        for file in filenames:
+# Obtaining every csv file from the corresponding folder
+for file in sorted(os.listdir(csv_folder_path)):
             
-            if '.csv' in file:
-                
-                fits_name = dirpath.split('/')[-1]
-                
-                filter_name = fits_name.split('_')[-1]
-                
-                if filter_name[-1] == 'M':
-                    filter_name = filter_name.replace('M','W')
+    if '.csv' in file:
+        
+        csv_file_name = file.split('.')[:-1]
+
+        fits_name = '_'.join(csv_file_name[0].split('_')[:-2])
+
+        filter_name = fits_name.split('_')[-1]
+        
+        if filter_name[-1] == 'M':
+            filter_name = filter_name.replace('M','W')
+            
+        if filter_name[:3] == 'HST':
+            filter_name = filter_name.replace('W','H')
+        
+        filter_name_list.append(filter_name)
                     
-                if filter_name[:3] == 'HST':
-                    filter_name = filter_name.replace('W','H')
-                
-                filter_name_list.append(filter_name)
-                            
-                file_path = os.path.join(dirpath,file)
-                file_path_list.append(file_path)
+        file_path = os.path.join(csv_folder_path,file)
+        file_path_list.append(file_path)
                 
 
 
@@ -253,9 +253,9 @@ for filter_system_index, filter_system in enumerate(filter_name_group_sorted):
                     ('Redshift','Wavelenght Emitted [nm]')]
     
     # We can define the pair of magnitudes we want to plot togheter on y-axis
-    y_axis_magnitude = [('X_cent','Y_cent'),('Ind','Eff_rad_kpc')] 
-    y_axis_label = [('X center position [pix]','Y center position [pix]'),
-                    ('Sersic Index','Effective radius [Kpc]')] 
+    y_axis_magnitude = [('Mag','Mag'),('Ind','Eff_rad_kpc')] 
+    y_axis_label = [('Magnitude','Magnitude'),
+                    ('Sérsic Index','Effective radius [kpc]')] 
     
     
     # calling the layout func to define the correct grid shape
@@ -323,8 +323,8 @@ for filter_system_index, filter_system in enumerate(filter_name_group_sorted):
                 y_values_delta = (df_filter[filters][1])[f'{y_mag_1}_err'].to_numpy()        
                    
                 # Color of data
-                if y_mag_1 == 'X_cent':
-                    color = 'darkorange'
+                if y_mag_1 == 'Mag':
+                    color = 'dodgerblue'
 
                 else:
                     color = 'red'
@@ -411,10 +411,11 @@ for filter_system_index, filter_system in enumerate(filter_name_group_sorted):
                 axyrig = ax.twinx() 
                 
                 # Color of data
-                if y_mag_2 == 'Y_cent':
-                    color = 'limegreen'
+                if y_mag_2 == 'Mag':
+                    color = 'dodgerblue'
+
                 else:
-                    color = 'blueviolet'
+                    color = 'limegreen'
 
                 # Plot data
                 axyrig.scatter(x_values, y_values, color=color, marker='x',s=10)
@@ -450,7 +451,7 @@ for filter_system_index, filter_system in enumerate(filter_name_group_sorted):
     fig.tight_layout(pad=2)
 
     # Saving the plots in pdf
-    plt.savefig(f'{cwd}/{galaxy}_plot_galfit_{filter_name_title}_{psf}_{version}_pos_ser_radeff.pdf', format='pdf', dpi=1000, bbox_inches='tight')
+    plt.savefig(f'{cwd}/{galaxy}_plot_galfit_{filter_name_title}_{psf}_{version}_mag_ser_radeff.pdf', format='pdf', dpi=1000, bbox_inches='tight')
 
     # Closing the plot to avoid overlapse
     plt.close()    

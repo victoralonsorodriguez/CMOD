@@ -1,6 +1,6 @@
 
-# This script creates the ratios for the
-# Sersic index and the effective radius
+# This script creates the plots for the positon of galaxy center
+# for the Sersic index and the effective radius
 
 from astropy.io import fits
 from astropy.cosmology import FlatLambdaCDM
@@ -239,22 +239,23 @@ for filter_system_index, filter_system in enumerate(filter_name_group_sorted):
     
     #-------------------PLOTTING THE RESULTS-------------------#
     
-    # We are going to create a plot array with the ratios of
+    # We are going to create a plot array with the center positions,
     # the sersic index and the effective radius for each filter system
-
-    reference_filter = filter_system[-1]
     
-    print(f'Creating an array of ratio plots for {galaxy} with {filter_name_sys} filter system\n')
+    print(f'Creating an array of plots for {galaxy} with {filter_name_title} filter system\n')
     
     # Using tuples because we have a pair of x-axes and a apair of y-axes
     
     # The second z will be used to compute the corresponding wavelenght for the 
     # secondary x-axis labels
     x_axis_magnitude = [('z','z'),('z','z')]
-    x_axis_label = [('Redshift','Wavelenght Emitted [nm]'),('Redshift','Wavelenght Emitted [nm]')]
+    x_axis_label = [('Redshift','Wavelenght Emitted [nm]'),
+                    ('Redshift','Wavelenght Emitted [nm]')]
     
     # We can define the pair of magnitudes we want to plot togheter on y-axis
-    y_axis_magnitude = [('Ind','Ind'),('Eff_rad_kpc','Eff_rad_kpc')] 
+    y_axis_magnitude = [('X_cent','Y_cent'),('Ax_rat','Pos_ang')] 
+    y_axis_label = [('X center position [pix]','Y center position [pix]'),
+                    ('Axis ratio','Position angle [°]')] 
     
     
     # calling the layout func to define the correct grid shape
@@ -272,7 +273,7 @@ for filter_system_index, filter_system in enumerate(filter_name_group_sorted):
     pos_index = 0
     
     # Title of the plot
-    fig.suptitle(f'{galaxy} ratios with {filter_name_title} filters system with the {psf} psf {version}',
+    fig.suptitle(f'{galaxy} with {filter_name_title} filters system with the {psf} psf {version}',
             ha='center', va='top', fontweight='bold', fontsize='16')
     
     if len(filter_system) != len(positions)/2:
@@ -301,11 +302,6 @@ for filter_system_index, filter_system in enumerate(filter_name_group_sorted):
                 # Defining short variables for y magnitudes from left y-axis
                 y_mag_1 = y_axis_magnitude[mag][0]
                 y_mag_2 = y_axis_magnitude[mag][1]
-
-                y_axis_label = [(f'Sér. Ind. {plot_filter}/{reference_filter}',
-                                 f'Sér. Ind. {plot_filter}/{plot_filter}(z=0)'),
-                                (f'Eff. rad. {plot_filter}/{reference_filter}',
-                                 f'Eff. rad. {plot_filter}/{plot_filter}(z=0)')] 
                 
                 y_lab_1 = y_axis_label[mag][0]
                 y_lab_2 = y_axis_label[mag][1]
@@ -318,29 +314,20 @@ for filter_system_index, filter_system in enumerate(filter_name_group_sorted):
                     ax = axs[positions[pos_index][0],positions[pos_index][1]]
                 else:
                     ax = axs[positions[pos_index][0]]
-                
+
                 # Adding the filter name to every subplot
                 ax.set_title(plot_filter, fontweight='bold', fontsize='13')
                 
                 # Left y-axis values
-                y_values_fil = (df_filter[filters][1])[f'{y_mag_1}'].to_numpy()
-                y_values_ref = (df_filter[-1][1])[f'{y_mag_1}'].to_numpy()
-
-                if len(y_values_fil) != len(y_values_ref):
-                    y_values_ref = y_values_ref[:len(y_values_fil)]
-    
-                y_values = np.divide(y_values_fil,y_values_ref)
-
-                y_values[np.isnan(y_values)] = 0
-                
+                y_values = (df_filter[filters][1])[f'{y_mag_1}'].to_numpy()
                 y_values_delta = (df_filter[filters][1])[f'{y_mag_1}_err'].to_numpy()        
-
+                   
                 # Color of data
-                if y_mag_1 == 'Ind':
-                    color = 'magenta'
+                if y_mag_1 == 'X_cent':
+                    color = 'darkorange'
 
                 else:
-                    color = 'mediumblue'
+                    color = 'red'
 
                 # Plot data
                 ax.scatter(x_values, y_values, color=color, marker='.',s=20)
@@ -353,18 +340,18 @@ for filter_system_index, filter_system in enumerate(filter_name_group_sorted):
                 
                 # Number of ticks in the axex and space between
                 # the extreme values and the edges of the plot            
-                ax.set_xticks(np.linspace(np.nanmin(x_values), np.nanmax(x_values), 5))
+                ax.set_xticks(np.linspace(np.min(x_values), np.max(x_values), 5))
                 ax.set_xmargin(0.1)
 
                 
                 if all(item == y_values[0] for item in y_values) == False:
 
-                    ax.set_yticks(np.linspace(np.nanmin(y_values), np.nanmax(y_values), 5))
+                    ax.set_yticks(np.linspace(np.min(y_values), np.max(y_values), 5))
                     
                 else: 
                 
-                    ax.set_yticks(np.linspace(np.nanmin(y_values), np.nanmax(y_values)+1,1))
-                  
+                    ax.set_yticks(np.linspace(np.min(y_values), np.max(y_values)+1,1))
+                    
                 
                 ax.set_ymargin(0.05)
                 
@@ -415,28 +402,20 @@ for filter_system_index, filter_system in enumerate(filter_name_group_sorted):
                 
                 
                 # Right y-axis values for the second magnitude to plot
-                y_values_fil = (df_filter[filters][1])[f'{y_mag_2}'].to_numpy()
-                y_values_ref = ((df_filter[filters][1])[f'{y_mag_2}'])[0]
+                y_values = (df_filter[filters][1])[f'{y_mag_2}'].to_numpy()
+                y_values_delta = (df_filter[filters][1])[f'{y_mag_2}_err'].to_numpy()    
                 
-                if f'{y_mag_2}' == 'Eff_rad_kpc':
-                    y_values_ref = ((df_filter[filters][1])[f'{y_mag_2}'])[0]
-            
-                y_values = y_values_fil/y_values_ref
-
-                y_values[np.isnan(y_values)] = 0 
-                
-                y_values_delta = (df_filter[filters][1])[f'{y_mag_2}_err'].to_numpy()   
                 
                 # Creating a secondary y-axis in the right
                 # that shares the x-axis with the left one
                 axyrig = ax.twinx() 
                 
                 # Color of data
-                if y_mag_2 == 'Ind':
-                    color = 'black'
+                if y_mag_2 == 'Y_cent':
+                    color = 'dodgerblue'
 
                 else:
-                    color = 'crimson'
+                    color = 'limegreen'
 
                 # Plot data
                 axyrig.scatter(x_values, y_values, color=color, marker='x',s=10)
@@ -450,11 +429,11 @@ for filter_system_index, filter_system in enumerate(filter_name_group_sorted):
                 # data and the edges and the decimals in the ticks
                 if all(item == y_values[0] for item in y_values) == False:
 
-                    axyrig.set_yticks(np.linspace(np.nanmin(y_values), np.nanmax(y_values), 5))
+                    axyrig.set_yticks(np.linspace(np.min(y_values), np.max(y_values), 5))
                     
                 else: 
                 
-                    axyrig.set_yticks(np.linspace(np.nanmin(y_values), np.nanmax(y_values)+1,1))
+                    axyrig.set_yticks(np.linspace(np.min(y_values), np.max(y_values)+1,1))
                 
                 axyrig.set_ymargin(0.05)
                 axyrig.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
@@ -466,40 +445,16 @@ for filter_system_index, filter_system in enumerate(filter_name_group_sorted):
                     
                 # Moving to the next position in the grid layout
                 pos_index = pos_index + 1
-   
-         
+             
+            
     # Adding enought space for the plots and the title
     fig.tight_layout(pad=2)
 
     # Saving the plots in pdf
-    plt.savefig(f'{cwd}/{galaxy}_plot_ratios_{filter_name_title}_{psf}_{version}_ser_radeff.pdf', format='pdf', dpi=1000, bbox_inches='tight')
+    plt.savefig(f'{cwd}/{galaxy}_plot_galfit_{filter_name_title}_{psf}_{version}_pos_axrat_posang.pdf', format='pdf', dpi=1000, bbox_inches='tight')
+
     # Closing the plot to avoid overlapse
     plt.close()    
 
-print('All ratio plots are done')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+print('All galfit plots are done')

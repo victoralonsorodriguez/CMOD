@@ -148,7 +148,7 @@ for file in sorted(os.listdir(cwd)):
     
         # loop for all frames layers that form the fits file
         #for sub_frame_index in range(0,int(z_max/z_step)+1):
-        for sub_frame_index in range(0,2): # this range just to do a quick check
+        for sub_frame_index in range(0,5): # this range just to do a quick check
 
             # obtaining a frame of the fits
             sub_frame = img_flux[sub_frame_index]
