@@ -1,0 +1,3 @@
+Este directorio contiene los cubos de datos de la galaxia M84 que ha sido analizada y con la que se puede hacer una prueba del funcionamiento de los programas creados. Tras descargarlos se han de descomprimir cada uno de ellos para poder utilizarlos. 
+
+Para poder ejecutar dicha prueba hay que copiar todos los [programas](https://github.com/victoralonsorodriguez/TFG/tree/main/Programas_creados) en este directorio y ejecutar uno de los archivos .sh mediante el comendo ./sh_galfit_auto_xxxx.sh con la versión que se quiera utilizar. El proceso tardará varias horas dependiendo de la capacidad de cómputo de la CPU con la que se esté trabajando. 
