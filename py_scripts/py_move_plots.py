@@ -20,7 +20,7 @@ os.mkdir(plot_folder)
 
 for file in os.listdir(cwd):
 
-    if '.pdf' in file and 'multiplot' in file and 'galfit' in file:
+    if '.pdf' in file and 'plot' in file and 'galfit' in file:
             
             file_original_path = os.path.join(cwd, file)
             file_new_path = os.path.join(cwd,f'{plot_folder}',file)
@@ -39,7 +39,7 @@ os.mkdir(plot_folder)
 
 for file in os.listdir(cwd):
 
-    if '.pdf' in file and 'multiplot' in file and 'ratios' in file:
+    if '.pdf' in file and 'plot' in file and 'ratios' in file:
             
             file_original_path = os.path.join(cwd, file)
             file_new_path = os.path.join(cwd,f'{plot_folder}',file)
