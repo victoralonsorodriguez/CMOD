@@ -27,16 +27,46 @@ from py_galfit_constraints_values import constaints_values
 from py_galfit_kpc_correction import kpc_correction
 
 
-#--------CODE------#
+#--------CODE--------#
 
 # to compute the total time
 start_time = time.time()
 
+# INFORMATION FROM FOLDER NAME
+
 # getting the current working directory
 cwd = os.getcwd()
 
+# obtaining the name elements of the folder
+folder_name_elements = (cwd.split('/')[-1]).split('_')
+
 # obtaining the galaxy name
-galaxy = (cwd.split('/')[-1]).split('_')[0]
+galaxy = folder_name_elements[0]
+
+# obtaining the galaxy version
+version = folder_name_elements[-1]
+
+# PSF: Point Spread Function 
+
+# Size of the PSF for galfit
+if 'PSF' in folder_name_elements or 'psf' not in folder_name_elements:
+
+    psf_size = 'large'
+
+else:
+
+    psf_size = 'small'
+
+
+# Name of the psf
+psf_fits = f'psf_{galaxy}_{psf_size}_flux_norm.fits'
+
+# If an specific psf is not created for the galaxy
+# it will be used a general small
+if os.path.exists(f'./{psf_fits}') == False:
+
+    psf_fits = 'psf_small_stacked_original_flux_norm.fits'
+
 
 # Obtain fits files names form a directory
 fits_list = []
@@ -56,15 +86,6 @@ crop_factor = 10
 # GALFIT REQUIREMENTS
 # initial parameters for galfit
 initial_effective_radius,initial_sersic_index,initial_axis_ratio,initial_position_angle = initial_params()
-
-# external files for galfit
-psf_size = cwd.split('/')[-1].split('_')[2]
-psf_fits = f'psf_{galaxy}_{psf_size}_flux_norm.fits'
-
-
-if os.path.exists(f'./{psf_fits}') == False:
-
-    psf_fits = 'psf_small_stacked_original_flux_norm.fits'
 
 
 # constraints for galfit
@@ -157,7 +178,7 @@ for file in sorted(os.listdir(cwd)):
     
         # loop for all frames layers that form the fits file
         #for sub_frame_index in range(0,int(z_max/z_step)+1):
-        for sub_frame_index in range(0,5): # this range just to do a quick 
+        for sub_frame_index in range(0,2): # this range just to do a quick 
             
             # Obtaining the corresponding redshift for each image
             redshift_index = sub_frame_index*z_step

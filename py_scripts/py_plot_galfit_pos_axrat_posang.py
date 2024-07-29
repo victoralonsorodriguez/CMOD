@@ -120,11 +120,30 @@ def get_key(val,dic):
 
 #-------------------MAIN CODE-------------------#
 
-# Obtaining the current working directory and the galaxy
+# INFORMATION FROM FOLDER NAME
+
+# getting the current working directory
 cwd = os.getcwd()
-galaxy = cwd.split('/')[-1].split('_')[0]
-psf = cwd.split('/')[-1].split('_')[2]
-version = cwd.split('/')[-1].split('_')[-1]
+
+# obtaining the name elements of the folder
+folder_name_elements = (cwd.split('/')[-1]).split('_')
+
+# obtaining the galaxy name
+galaxy = folder_name_elements[0]
+
+# obtaining the galaxy version
+version = folder_name_elements[-1]
+
+# PSF: Point Spread Function 
+
+# Size of the PSF for galfit
+if 'PSF' in folder_name_elements or 'psf' not in folder_name_elements:
+
+    psf_size = 'PSF'
+
+else:
+
+    psf_size = 'psf'
 
 # csv file folder where obtain the data
 csv_folder = f'{galaxy}_csv'
@@ -273,7 +292,7 @@ for filter_system_index, filter_system in enumerate(filter_name_group_sorted):
     pos_index = 0
     
     # Title of the plot
-    fig.suptitle(f'{galaxy} with {filter_name_title} filters system with the {psf} psf {version}',
+    fig.suptitle(f'{galaxy} with {filter_name_title} filters system with a {psf_size} - {version}',
             ha='center', va='top', fontweight='bold', fontsize='16')
     
     if len(filter_system) != len(positions)/2:
@@ -451,10 +470,11 @@ for filter_system_index, filter_system in enumerate(filter_name_group_sorted):
     fig.tight_layout(pad=2)
 
     # Saving the plots in pdf
-    plt.savefig(f'{cwd}/{galaxy}_plot_galfit_{filter_name_title}_{psf}_{version}_pos_axrat_posang.pdf', format='pdf', dpi=1000, bbox_inches='tight')
+    plt.savefig(f'{cwd}/{galaxy}_plot_galfit_{filter_name_title}_{psf_size}_{version}_pos_axrat_posang.pdf', format='pdf', dpi=1000, bbox_inches='tight')
 
     # Closing the plot to avoid overlapse
     plt.close()    
 
 
-print('All galfit plots are done')
+print('All galfit plots for center position, axis ratio and position angle are done')
+print('#---------------------------------------------------------------------------#\n')
