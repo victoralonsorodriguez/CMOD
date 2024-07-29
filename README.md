@@ -14,6 +14,10 @@ There are four modes of analysis:
 
 ## Version change log
 
+### Version 2.05 - psf_name branch
+
+With this new version the galaxy folder name sctructure has an important meaning. If 'psf' (lowercase) is included in the name then for Galfit analysis will be used a small point spread function (PSF). Otherwise a large PSF will be crerated and used for the analysis. Due this, from now on the galaxy folder name has just to include the galaxy name and the version as 'M84_V5' for example for a large PSF.
+
 ### Version 2.04 - auto_versions_analysis branch
 
 This version has a new automatic shell script. Instead of four different shell scripts, one for each analaysis mode, there are just one. 'sh_galfit_auto.sh'. To execute the modes it is neccessary to indicate them as an argument in the comment line. For example, to run the original mode it should be as './sh_galfit_auto.sh original'. If no argument is given, the default mode is the 'medfilt_version' since is the most accurate mode. 
@@ -30,7 +34,7 @@ Now the plots are created from the csv folder for each galaxy. New plots of the 
 
 This version includes a new folder to store the csv files created during the galfit analysis. This folder is included inside the main galaxy directory names as 'galaxyname_csv'.
 
-## Version 1.00
+### Version 1.00
 
 This version was presented as the final code for the BSc Thesis. It allows to analyse the galaxies with galfit and create some plots.
 
