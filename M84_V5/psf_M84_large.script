@@ -1,0 +1,24 @@
+# IMAGE PARAMETERS and GALFIT CONTROL PARAMETERS
+ A) none # Input Data image (FITS file))
+ B) psf_M84_large.fits # Name for the output image)
+ C) none # Noise image name (made from data if blank or 'none')
+ D) none # Input PSF image and (optional) diffusion kernel
+ E) 1 # PSF oversampling factor relative to data
+ F) none # Pixel mask (ASCII file or FITS file with non-0 values)
+ G) none # Parameter constraint file (ASCII)
+ H) 1		340 1		318 # Image region to fit (xmin xmax ymin ymax)
+ I) 340		318 # Size of convolution box (x y)
+ J) 25 # Magnitude photometric zeropoint
+ K) 0.2 0.2 # Plate/pixel scale (dx dy)
+ O) regular # Display type (regular, curses, both)
+ P) 1 # Options: 0=normal run; 1,2=make model/imgblock & quit
+
+# Moffat function
+ 0) moffat     # object type
+ 1) 170 159 1 1 #  Position centre x, y [pix]
+ 3) 1     1          #  total magnitude
+ 4) 2.0336     1          #  FWHM   [pix]
+ 5) 1.8781     1          #  powerlaw (beta)
+ 9) 1      1          #  axis ratio (b/a)   
+10) 0     1          #  position angle (PA)  [Degrees: Up=0, Left=90] 
+ Z) 0                      #  Skip this model in output image?  (yes=1, no=0)
