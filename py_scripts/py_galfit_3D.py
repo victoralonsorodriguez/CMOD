@@ -109,7 +109,7 @@ constraints_file.close()
 # OTHER UTILITIES
 
 # Create a folder to store the csv files
-csv_folder = f'{galaxy}_csv'
+csv_folder = f'{galaxy}_{version}_csv'
 if os.path.isdir(csv_folder) == True:
     
     shutil.rmtree(f'{cwd}/{csv_folder}')

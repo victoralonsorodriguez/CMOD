@@ -19,9 +19,7 @@ fi
 python3 py_move_galfit_script.py
 
 # Creating the plots
-python3 py_plot_galfit_mag_ser_effrad.py
-python3 py_plot_galfit_pos_axrat_posang.py
-python3 py_plot_ratios_ser_effrad.py
+python3 py_plot_galfit_all.py
 
 # Moving the plots to an specific folder
 python3 py_move_plots.py
