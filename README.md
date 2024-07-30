@@ -14,6 +14,10 @@ There are four modes of analysis:
 
 ## Version change log
 
+### Version 2.06 - plots_versions_united branch
+
+This new version merge all plot codes into one script. This will allow to modify them in an easy way.
+
 ### Version 2.05 - psf_name branch
 
 With this new version the galaxy folder name sctructure has an important meaning. If 'psf' (lowercase) is included in the name then for Galfit analysis will be used a small point spread function (PSF). Otherwise a large PSF will be crerated and used for the analysis. Due this, from now on the galaxy folder name has just to include the galaxy name and the version as 'M84_V5' for example for a large PSF.
