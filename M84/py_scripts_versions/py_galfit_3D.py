@@ -212,8 +212,8 @@ for file in sorted(os.listdir(fits_path)):
         #------ANALYSING EACH FRAME OF THE DATA CUBE-----#
     
         # loop for all frames layers that form the fits file
-        #for sub_frame_index in range(0,int(z_max/z_step)+1):
-        for sub_frame_index in range(0,2): # this range just to do a quick 
+        for sub_frame_index in range(0,int(z_max/z_step)+1):
+        #for sub_frame_index in range(0,2): # this range just to do a quick 
             
             # Obtaining the corresponding redshift for each image
             redshift_index = sub_frame_index*z_step
@@ -407,7 +407,8 @@ for file in sorted(os.listdir(fits_path)):
                 
                 # Extract the unit to create a Quantity inside the if
                 kpc_unit = kpc_per_arcsec.unit
-                
+
+                '''
                 eff_rad_kpc = eff_rad_arcsec * kpc_per_arcsec.value    
                 eff_rad_kpc_err = eff_rad_arcsec_err * kpc_per_arcsec.value
                 
@@ -418,7 +419,13 @@ for file in sorted(os.listdir(fits_path)):
                     
                     eff_rad_kpc = eff_rad_arcsec * kpc_per_arcsec.value              
                     eff_rad_kpc_err = eff_rad_arcsec_err * kpc_per_arcsec.value 
+
+                '''
+                
+                kpc_per_arcsec = kpc_correction(galaxy)*kpc_unit
                     
+                eff_rad_kpc = eff_rad_arcsec * kpc_per_arcsec.value              
+                eff_rad_kpc_err = eff_rad_arcsec_err * kpc_per_arcsec.value 
                 
                 ser_index = hdr['1_N'].split(' ')[0]
                 ser_index_err = hdr['1_N'].split(' ')[2]
