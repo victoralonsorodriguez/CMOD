@@ -40,6 +40,7 @@ for dir in $ *
 do
     if [ -d $dir ] && [ $dir != py_scripts_external ]
     then 
+        echo Galaxy: $dir
         echo $'\n'Starting Galfit analysis for galaxy $dir
         cd ./$dir/py_scripts_external
         ./sh_galfit_auto.sh $psf_type $version

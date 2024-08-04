@@ -41,6 +41,7 @@ then
     version=medfilt_inout
 fi
 
+echo PSF type: $psf_type // Galfit Version: $version $'\n'
 python3 py_version_control.py $psf_type $version
 
 # Creating the large psf

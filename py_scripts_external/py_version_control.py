@@ -124,13 +124,13 @@ else:
     # if PSF is given by argument or is an empty argument a PSF will be used
     if sys.argv[1] == 'PSF':
 
-        folder_new_version_name = last_version_file_name.split(f'{last_run_version}')[0]+f'{int(last_run_version)+1}'
+        folder_new_version_name = f'{galaxy}_V{int(last_run_version)+1}'
         os.mkdir(f'{previus_cwd}/{folder_new_version_name}')
 
-    # ifpsf is given as argument then a psf folder will be created
+    # if psf is given as argument then a psf folder will be created
     else:
 
-        folder_new_version_name = last_version_file_name.split(f'{last_run_version}')[0]+f'{int(last_run_version)+1}'+f'_{sys.argv[1]}'
+        folder_new_version_name = f'{galaxy}_V{int(last_run_version)+1}_{sys.argv[1]}'
         os.mkdir(f'{previus_cwd}/{folder_new_version_name}')
 
 
