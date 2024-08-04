@@ -56,9 +56,12 @@ python3 py_galfit_3D.py $version
 python3 py_move_galfit_script.py
 
 # Creating the plots
-python3 py_plot_galfit_all.py
+python3 py_plot_galfit_all.py $version
 
 # Moving the plots to an specific folder
-python3 py_move_plots.py
+python3 py_move_plots_single.py
+
+# Moving the plots to a global folder
+python3 py_move_plots_global.py
 
 echo Galfit full analysis is finished with medfilt_inout methods

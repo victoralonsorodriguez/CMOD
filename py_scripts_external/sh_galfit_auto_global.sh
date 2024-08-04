@@ -43,7 +43,7 @@ do
         echo Galaxy: $dir
         echo $'\n'Starting Galfit analysis for galaxy $dir
         cd ./$dir/py_scripts_external
-        ./sh_galfit_auto.sh $psf_type $version
+        ./sh_galfit_auto_single.sh $psf_type $version
         echo $'\n'Full Galfit analysis is finished for galaxy $dir $'\n'
         cd ../.. 
     fi

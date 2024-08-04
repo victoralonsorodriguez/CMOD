@@ -5,7 +5,7 @@
 
 for dir in ../*
 do 
-    if [ -d $dir ] && [ $dir != ../py_scripts_external ]
+    if [ -d $dir ] && [ $dir != ../py_scripts_external ] && [[ $dir != *"plot"* ]]
         then
         echo $dir
         cd ./$dir

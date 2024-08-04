@@ -2,7 +2,7 @@
 # Script to store Galfit initial parameters
 def initial_params(galaxy):
 
-    if galaxy == 'ESO4958G05':
+    if galaxy == 'ESO498G05':
     
         eff_rad = 73
         ser_ind = 4.0

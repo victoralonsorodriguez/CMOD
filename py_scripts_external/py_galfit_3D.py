@@ -213,7 +213,7 @@ for file in sorted(os.listdir(fits_path)):
     
         # loop for all frames layers that form the fits file
         for sub_frame_index in range(0,int(z_max/z_step)+1):
-        #for sub_frame_index in range(0,2): # this range just to do a quick 
+        #for sub_frame_index in range(0,3): # this range just to do a quick 
             
             # Obtaining the corresponding redshift for each image
             redshift_index = sub_frame_index*z_step

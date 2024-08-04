@@ -13,6 +13,7 @@ from matplotlib.ticker import FixedLocator
 import functools
 from itertools import groupby
 
+import sys
 import os
 import subprocess
 import shutil
@@ -139,6 +140,15 @@ last_line_version_file = str(subprocess.check_output(['tail', '-1', version_file
 folder_new_version_name = last_line_version_file.split(' # ')[0]
 folder_new_version_path = f'{previus_cwd}/{folder_new_version_name}'
 
+if len(sys.argv) == 1:
+
+    galfit_version = last_line_version_file.split(' # ')[1].split(' / ')[0]
+
+else:
+
+    galfit_version = sys.argv[1]
+
+
 # Depending on the folder name a large PSF or a
 # small psf will be created
 folder_name_elements = folder_new_version_name.split('_')
@@ -154,7 +164,6 @@ if 'PSF' in folder_name_elements or 'psf' not in folder_name_elements:
 else:
 
     psf_size = 'psf'
-
 
 
 # csv file folder where obtain the data
@@ -284,7 +293,7 @@ for filter_system_index, filter_system in enumerate(filter_name_group_sorted):
         for k in range(len(plots_list[l])):
 
             # Title of the plot
-            plot_title = f'{galaxy} with {filter_name_title} filters system with a {psf_size} - {version}'
+            plot_title = f'{galaxy} with {filter_name_title} filters system with a {psf_size} using {galfit_version} - {version}'
             
             # Using tuples because we have a pair of x-axes and a apair of y-axes
             # The second z will be used to compute the corresponding wavelength for the 
@@ -318,7 +327,7 @@ for filter_system_index, filter_system in enumerate(filter_name_group_sorted):
                 reference_filter = filter_system[-1]
 
                 # Title of the plot
-                plot_title = f'{galaxy} ratios with {filter_name_title} filters system with a {psf_size} - {version}'
+                plot_title = f'{galaxy} ratios with {filter_name_title} filters system with a {psf_size} using {galfit_version} - {version}'
                 
             
 
