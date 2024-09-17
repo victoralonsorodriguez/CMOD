@@ -14,6 +14,12 @@ There are four modes of analysis:
 
 ## Version change log
 
+### Version 3.0
+
+This version changes the way the analysis is carried out. Almost every file has been modified.
+
+The galaxies 
+
 ### Version 2.06 - plots_versions_united branch
 
 This new version merge all plot codes into one script. This will allow to modify them in an easy way.
