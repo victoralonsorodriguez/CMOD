@@ -4,6 +4,8 @@ Ths repository contains the codes created to study the CMOD effect from a paract
 
 The main branch contains the final files of every development branch correponding to each new version. 
 
+For running the code it is necessary to execute the file sh_galfit_auto_global.sh inside py_scripts_external and it should be enought if all the packages are intalled.
+
 There are four modes of analysis:
 
     - 'original': it was the first mode developed. It is the less accurate
