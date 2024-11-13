@@ -299,8 +299,8 @@ for filter_system_index, filter_system in enumerate(filter_name_group_sorted):
             # The second z will be used to compute the corresponding wavelength for the 
             # secondary x-axis labels
             x_axis_magnitude = [('z','z'),('z','z')]
-            x_axis_label = [('Redshift','wavelength Emitted [nm]'),
-                            ('Redshift','wavelength Emitted [nm]')]
+            x_axis_label = [('Redshift','Wavelength Emitted [nm]'),
+                            ('Redshift','Wavelength Emitted [nm]')]
             
 
             # Different plot depending on the j and k index
