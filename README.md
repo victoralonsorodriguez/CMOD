@@ -1,4 +1,4 @@
-# CMOD - Chromatic Surface Brightness MODulation
+LS -L# CMOD - Chromatic Surface Brightness MODulation
 
 Ths repository contains the codes created to study the CMOD effect from a paractical point of view.
 
@@ -13,6 +13,10 @@ There are four modes of analysis:
 
 
 ## Version change log
+
+### Version 4.0 
+
+Currently working on a new code version
 
 ### Version 3.0
 
