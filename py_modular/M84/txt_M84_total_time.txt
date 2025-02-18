@@ -1,0 +1,3 @@
+1573.42 # seconds
+26.22 # minutes
+0.44 # hours
