@@ -1,3 +1,11 @@
+'''
+Implementar:
+    - Sistema de versiones (sobre escribir directorios)
+    - Organaizar archivos dentro del directorio de cada filtro
+    - Comprobar lo de los angulos de iso par alas CI si coinciden 
+'''
+
+
 
 import numpy as np
 import pandas as pd
@@ -23,15 +31,6 @@ import pdb
 import time
 import warnings
 warnings.filterwarnings('ignore')
-
-# Packages for initial condition
-from scipy.optimize import curve_fit
-from scipy.integrate import simps
-from scipy.signal import deconvolve
-
-from photutils.isophote import EllipseGeometry
-from photutils.aperture import EllipticalAperture
-from photutils.isophote import Ellipse
 
 from py_galfit_constraints_script import create_constraints
 from py_galfit_constraints_values import constraints_values
@@ -100,7 +99,7 @@ def main():
         # We should analyse each frame separatelly
         
         analysis_range = datacube_flux_data.shape[0]
-        analysis_range = 3
+        #analysis_range = 3
         
         for frame_pos in range(analysis_range):
             
@@ -131,14 +130,11 @@ def main():
             # Only for the first image
             max_pix_value_center, max_pix_value_center_pos = max_center_value(frame,crop_factor)
             
-            '''
-            Initial conditions for each datacube
-            '''
-            
+
             if frame_pos == 0:
                 
-                #gal_iso_fit_csv_path = isophote_fitting(frame_path,max_pix_value_center_pos,cons=pxsc_zcal_const)
-                gal_iso_fit_csv_path = './m84_VBIN018_SL_zSimJ_EucHab_z0.00_counts_isophote.csv'
+                gal_iso_fit_csv_path = isophote_fitting(frame_path,max_pix_value_center_pos,cons=pxsc_zcal_const)
+                #gal_iso_fit_csv_path = './m84_VBIN018_SL_zSimJ_EucHab_z0.00_counts_isophote.csv'
                 gal_iso_fit_df = pd.read_csv(gal_iso_fit_csv_path)
                 break_pos, break_pos_bul, I_0_disk_in, h_disk_in, n_bul_in, r_e_bul_in, I_e_bul_in = initial_conditions(frame_name_noext,
                                                                                                                         gal_iso_fit_df, 
@@ -146,9 +142,10 @@ def main():
                                                                                                                         'intens', 
                                                                                                                         'intens_err',
                                                                                                                         const=pxsc_zcal_const)
-                ell_mean_in = gal_iso_fit_df.loc[:, 'ellipticity'].mean()
+                # Computing the mean values from the external partes of the galaxy
+                ell_mean_in = gal_iso_fit_df.loc[break_pos:, 'ellipticity'].mean()
                 ax_rat_in = round_number(1 - ell_mean_in,3)
-                pa_rad_mean_in = gal_iso_fit_df.loc[:, 'pa'].mean()
+                pa_rad_mean_in = gal_iso_fit_df.loc[break_pos:, 'pa'].mean()
                 pa_deg_in = round_number(rad_to_deg_abs(pa_rad_mean_in)-90,3)
             
             
@@ -266,15 +263,15 @@ def main():
         # moving all the output and created files to a folder in order to keep the order in the directory        
         for output_file in sorted(os.listdir(cwd)):
 
+            if '.csv' in output_file and 'galfit' in output_file:
+
+                shutil.copyfile(f'{cwd}/{output_file}',f'{csv_folder_path}/{output_file}')
+
             if ('.py' not in output_file and os.path.isdir(output_file) == False and
                 ('galfit.' in output_file or 'fit.' in output_file or datacube_name_noext in output_file)):
                 
                 os.replace(f'{cwd}/{output_file}', f'{datacube_folder_path}/{output_file}')
-                continue
-                
-            if '.csv' in output_file:
 
-                shutil.copyfile(f'{cwd}/{output_file}',f'{datacube_folder_path}/{output_file}')
 
 
 if __name__ == '__main__':
@@ -305,7 +302,9 @@ if __name__ == '__main__':
     for datacube_name in sorted(os.listdir(datacube_original_folder_path)):
         if '.fits' in datacube_name:
             datacube_name_list.append(datacube_name)
-            
+    
+    # Datacubes general name for the galaxy without the filter name
+    datacube_name_general = '_'.join((datacube_name_list[0].split('.fits')[0]).split('_')[:-1])
     
     # We need the  pixel scale and the calibration constant to convert 
     # from counts to magnitudes
@@ -398,6 +397,10 @@ if __name__ == '__main__':
     constraints_file.close()
 
     # OTHER UTILITIES
+    
+    # Folder for the .csv files
+    csv_folder_path = f'{cwd}/{datacube_name_general}_csv'
+    create_folder(csv_folder_path,overwrite=True)
 
     if '--version_control' in sys.argv:
 

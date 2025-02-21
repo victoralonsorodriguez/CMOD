@@ -9,6 +9,8 @@ from py_galfit_kpc_correction import kpc_correction
 from astropy.io import fits
 from astropy.cosmology import FlatLambdaCDM
 
+from py_round_number import round_number
+
 def galfit_init_dataframe():
     
     # creating the Pandas dataframe to store the information
@@ -66,8 +68,8 @@ def galfit_create_dataframe(df,galaxy_name,output_file_path,pxsc_zcal_const):
         eff_rad_err = np.nan
     
     # Effective radius in arcsec
-    eff_rad_arcsec = float(eff_rad) * pxsc_zcal_const[0]
-    eff_rad_arcsec_err = float(eff_rad_err) * pxsc_zcal_const[0]
+    eff_rad_arcsec = round_number(float(eff_rad) * pxsc_zcal_const[0],3)
+    eff_rad_arcsec_err = round_number(float(eff_rad_err) * pxsc_zcal_const[0],3)
     
     # Effective radius in kpc
     #moving distances from kpc to arcsec
@@ -85,8 +87,8 @@ def galfit_create_dataframe(df,galaxy_name,output_file_path,pxsc_zcal_const):
     # Obtaining a Quantity
     kpc_per_arcsec = kpc_correction(galaxy_name)*kpc_unit
     
-    eff_rad_kpc = eff_rad_arcsec * kpc_per_arcsec.value              
-    eff_rad_kpc_err = eff_rad_arcsec_err * kpc_per_arcsec.value 
+    eff_rad_kpc = round_number(eff_rad_arcsec * kpc_per_arcsec.value,3)
+    eff_rad_kpc_err = round_number(eff_rad_arcsec_err * kpc_per_arcsec.value,3)
 
     
     ser_index = hdr['1_N'].split(' ')[0]

@@ -1,0 +1,14 @@
+
+#-------ANALYSIS CONFIGURATION-------#
+
+ANALYSIS_PROGRAMME = 0          # Galfit = 0 (Default) or Imfit = 1
+ANALYSIS_VERSION = 4            # original = 0, medfilt = 1, inout = 2, med_inout = 4 (Default)
+ANALYSIS_VERSION_CONTROL = 1    # No = 0 or Yes = 1 (Default)
+
+#-------PLOT CONFIGURATION-------#
+
+PLOT_SYSTEM = ['Euclid','SDSS']                 # auto = 0 (Default), system list = ['','',...]
+PLOT_FILTER = ['HE','YE','V']            # auto = 0 (Default), filter list = ['','',...]
+PLOT_MAG = 0            # auto = 0 (Default), magntiude list in tuple pairs = [('Mag1','Mag2'),('Mag3','Mag4'),...]
+PLOT_MODE = 0           # filter = 0 or magnitude = 1 or both = 2 (Default)
+
