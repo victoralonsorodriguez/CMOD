@@ -38,7 +38,7 @@ def plot_prop_conf(mag_pairs_plot):
                 mag_marker_size = 100
                 
             elif mag == 'Pos_ang':
-                mag_label = 'Position Angle'
+                mag_label = 'Position Angle [°]'
                 mag_color = 'gold'
                 mag_marker = 'P'
                 mag_marker_size = 150
@@ -55,13 +55,20 @@ def plot_prop_conf(mag_pairs_plot):
                 mag_marker = 'X'
                 mag_marker_size = 150
             
+            
+            mag_plot_style = 'sct'
+            mag_legend_label = ' '
             mag_alpha = 0.75
+            mag_zorder = 3
 
             mag_plot_prop_dict[mag] = {}
+            mag_plot_prop_dict[mag]['plot_style'] = mag_plot_style
             mag_plot_prop_dict[mag]['label'] = mag_label
+            mag_plot_prop_dict[mag]['leg_lab'] = mag_legend_label
             mag_plot_prop_dict[mag]['color'] = mag_color
             mag_plot_prop_dict[mag]['marker'] = mag_marker
             mag_plot_prop_dict[mag]['marker_size'] = mag_marker_size
             mag_plot_prop_dict[mag]['alpha'] = mag_alpha
+            mag_plot_prop_dict[mag]['zorder'] = mag_zorder
             
     return mag_plot_prop_dict

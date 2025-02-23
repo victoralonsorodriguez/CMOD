@@ -10,10 +10,10 @@ from astropy.cosmology import FlatLambdaCDM
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 
-from py_px_kpc import px_to_kpc,kpc_to_px,arcsec_to_kpc,kpc_to_arcsec
-from py_rad_deg import deg_to_rad,rad_to_deg
-from py_mag_counts_convert import fits_mag_to_counts, fits_counts_to_mag, values_counts_to_mag,values_mag_to_counts
-from py_convert_ell_axrat import axrat_to_ell,ell_to_axrat
+from py_convert_functions import (values_counts_to_mag,values_mag_to_counts,
+                                  rad_to_deg,deg_to_rad,
+                                  px_to_kpc,kpc_to_px,
+                                  ell_to_axrat,axrat_to_ell)
 
 
 
@@ -21,7 +21,7 @@ def plot_profiles(csv_path_list='.',
                   fig_name='fig_name',
                   cons=None,
                   final_plot=False,
-                  export_path='.'):
+                  output_path='.'):
     
     
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -255,6 +255,6 @@ def plot_profiles(csv_path_list='.',
         img_format = 'pdf'
 
     fig_name_final = f'{fig_name}_profiles.{img_format}'
-    fig_path = f'{export_path}/{fig_name_final}'
+    fig_path = f'{output_path}/{fig_name_final}'
     plt.savefig(f'{fig_path}', format=img_format, dpi=1000, bbox_inches='tight')    
     plt.close()    

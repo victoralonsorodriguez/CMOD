@@ -6,10 +6,8 @@ import functools
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 
-from py_px_kpc import px_to_kpc,kpc_to_px,arcsec_to_kpc,kpc_to_arcsec
-from py_rad_deg import deg_to_rad,rad_to_deg
-from py_mag_counts_convert import fits_mag_to_counts, fits_counts_to_mag, values_counts_to_mag,values_mag_to_counts
-from py_convert_ell_axrat import axrat_to_ell,ell_to_axrat
+from py_convert_functions import px_to_kpc,kpc_to_px,values_counts_to_mag,values_mag_to_counts
+
 
 def plot_initial_conditions(fig_name,
                             x_data_tot,

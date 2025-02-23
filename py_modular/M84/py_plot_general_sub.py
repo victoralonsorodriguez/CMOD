@@ -15,12 +15,11 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 from matplotlib.ticker import FixedLocator
-from matplotlib.ticker import (MultipleLocator, AutoMinorLocator)
 import matplotlib.font_manager as font_manager
-import matplotlib.ticker as ticker
 import functools
 
-from py_round_number import round_number
+
+from py_convert_functions import RtW, WtR
 
 
 # Enable LaTeX rendering
@@ -42,25 +41,7 @@ plt.rc('text', usetex=True)
 plt.rc('font', family='serif')  # Use a serif font for LaTeX rendering
 
 
-# Transforming the redshift into wavelength
-def RtW(z,filter_wl):
 
-    wavelength = (filter_wl)/(1+z)
-    
-    np.seterr(divide = 'ignore') 
-    np.seterr(invalid = 'ignore')
-    
-    return round_number(wavelength,2)
-
-# Transforming the wavelength into redshift
-def WtR(wl,filter_wl):
-    
-    redshift = ((filter_wl)/wl) - 1 
-
-    np.seterr(divide = 'ignore') 
-    np.seterr(invalid = 'ignore')
-    
-    return round_number(redshift,2)
 
 # Position of the minor ticks in top axis
 def minor_ticks_pos(z_labels,filter_value):
@@ -73,12 +54,19 @@ def minor_ticks_pos(z_labels,filter_value):
 
     return np.array(tick_pos_list)
 
+def list_of_tuple(lst):
+    if isinstance(lst, str):  
+        lst = [lst]
+    return [tuple(lst)]
+
 
 # Creating a general function to plot
-def plot_gen(subplots = (1,1),
+def plot_gen(subplots_conf = False,
+             subplots_num = (1,1),
              subplots_positions = [(0,0)],
              subplots_titles = None,
              subplots_split_gruoups = 1,
+             subplots_save_ind = False,
              x_data=[],
              y_data=[],
              label_list=None,
@@ -137,7 +125,7 @@ def plot_gen(subplots = (1,1),
              plot_show = False):
     
     plt.rc('font', size=fig_fonsize)  # Adjust size to your preference
-
+    
     
     # Determinando el tamaño de las figuras
     
@@ -161,7 +149,7 @@ def plot_gen(subplots = (1,1),
     
     # Definiendo algunos colores
     if line_color is None:
-        line_color_list = ['red','dodgerblue','lime','blueviolet','darkorange','black','deeppink','gold']
+        line_color_list = [('red','dodgerblue','lime','blueviolet','darkorange','black','deeppink','gold')]
         line_color = line_color_list*(len(x_data)//len(line_color_list) + 1)
 
     # Definiendo alpha:
@@ -196,13 +184,27 @@ def plot_gen(subplots = (1,1),
             style_plot = ['line']*len(x_data)
         else:
             style_plot = ['sct']*len(x_data)
+            
     elif len(style_plot)>0 and len(style_plot)<len(x_data):
         if scatter_plot == False:
             style_plot = style_plot*(len(x_data)//len(style_plot) + 1)
         else:
             style_plot = ['sct']*(len(x_data)//len(style_plot) + 1)
-            
-        
+    
+
+    if y_axis_sides != 'both':
+
+        x_axis_label = list_of_tuple(x_axis_label)    
+        y_axis_label = list_of_tuple(y_axis_label)    
+        label_list = list_of_tuple(label_list)    
+        line_color = list_of_tuple(line_color)    
+        line_alpha = list_of_tuple(line_alpha)    
+        zorder = list_of_tuple(zorder)    
+        line_style = list_of_tuple(line_style)    
+        width_style = list_of_tuple(width_style)   
+        mark_style = list_of_tuple(mark_style) 
+        mark_size = list_of_tuple(mark_size) 
+        style_plot = list_of_tuple(style_plot)  
     
     # Informando en la terminal sobre lo que se está ploteando
     print(f'Creando el grafico {fig_name.split("/")[-1]}')
@@ -210,8 +212,8 @@ def plot_gen(subplots = (1,1),
     # Creando la figura como un solo subplot con ejes 'ax'
     #fig = plt.figure(figsize=fig_size_global)
     plt.subplots_adjust(hspace=0.5, wspace=0.5)
-    sub_row = subplots[0]
-    sub_col = subplots[1]
+    sub_row = subplots_num[0]
+    sub_col = subplots_num[1]
     
     # Para cambiar las propiedades de los plots cada 
     # cierto número de filas
@@ -228,138 +230,165 @@ def plot_gen(subplots = (1,1),
                     fig.delaxes(axs[row, col])
                 else:
                     fig.delaxes(axs[row])
+                
+    sub_plot_cost = True
     
     for data_pos in range(len(x_data)):
         
-        row = subplots_positions[data_pos][0] 
+        if subplots_conf == True:
+            row = subplots_positions[data_pos][0] 
 
-        # Dividing the plots into gropus with different properties
-        data_group = row // subplots_split_row_num 
-        
-        col = subplots_positions[data_pos][1]
-        
-        # If there is just one plot
-        if sub_col == 1:
-            ax = axs[row]
+            # Dividing the plots into gropus with different properties
+            data_group = row // subplots_split_row_num 
             
-        # For more than one plot
+            col = subplots_positions[data_pos][1]
+        
         else:
-            ax = axs[row][col]
+            data_group = 0
+    
+        if subplots_save_ind == True:
+            fig, ax = plt.subplots(nrows=1, ncols=1,
+                    figsize=(1*fig_size_rows, 1*fig_size_cols))
+            
+        else:
+            # If there is just one plot
+            if sub_col == 1 and sub_row > 1:
+                ax = axs[row]
+            
+            # For more than one plot
+            elif sub_col > 1:
+                ax = axs[row][col]
+                
+            elif sub_col == 1 and sub_row == 1:
+                ax = axs
             
         
         # Different index for data and plot atributes
-        if len(subplots_positions) != None:
-            prop_pos = 0
+        if y_axis_sides == 'both':
+            prop_pos = data_pos % 2
         else:
             prop_pos = data_pos
+            
+        prop_pos_l = 0
+        prop_pos_r = 1
+            
         
         # Si se indica un título se pone. Por defecto desactivado
         if '--no-title' not in sys.argv:
             if fig_title != None:
                 fig.suptitle(f'{fig_title}',fontsize=axis_font_size+10,y=0.995)
-                
-        ax.set_title(f'\\textbf{{{subplots_titles[data_pos]}}}',fontsize=axis_font_size+1)
+        
+        if subplots_titles != None:
+            ax.set_title(f'\\textbf{{{subplots_titles[data_pos]}}}',fontsize=axis_font_size+1)
+            
         
         x_data_bottom = np.array(x_data[data_pos])/x_con_factor
-        y_data_left = np.array(y_data[data_pos][0])/y_con_factor
-        y_data_right = np.array(y_data[data_pos][1])/y_con_factor
+        y_data_left = np.array(y_data[data_pos])/y_con_factor
+        
+        if y_axis_sides == 'both':
+            y_data_left = np.array(y_data[data_pos][0])/y_con_factor
+            y_data_right = np.array(y_data[data_pos][1])/y_con_factor
         
         # Representando los datos
-        # for data_pos in range(len(x_data)):
-        #if y_axis_diff == False or data_pos+1 != y_axis_diff_val_pos:
-        
         if y_axis_sides == 'both' or y_axis_sides == 'right':
             axyrig = ax.twinx()
-            
-        if style_plot[data_pos] == 'sct':
+
+        
+        if style_plot[data_group][prop_pos] == 'sct':
+
             if y_axis_sides == 'left' or y_axis_sides == 'both':
+                if y_axis_sides == 'both':
+                    prop_pos = prop_pos_l
+                
                 ax.scatter(x_data_bottom,
                         y_data_left,
-                        label=f'{label_list[data_pos]}',
+                        label=f'{label_list[data_group][prop_pos]}',
                         linewidth=0.15,
                         edgecolor='black',
                         color=line_color[data_group][prop_pos],
                         s=mark_size[data_group][prop_pos],
                         marker=mark_style[data_group][prop_pos],
-                        zorder=zorder[prop_pos],
-                        alpha=line_alpha[data_group][prop_pos])   
+                        zorder=zorder[data_group][prop_pos],
+                        alpha=line_alpha[data_group][prop_pos])  
                 
             if y_axis_sides == 'right' or y_axis_sides == 'both':  
-                
+                if y_axis_sides == 'both':
+                    prop_pos = prop_pos_r
                 axyrig.scatter(x_data_bottom,
                         y_data_right,
-                        label=f'{label_list[data_pos]}',
+                        label=f'{label_list[data_group][prop_pos]}',
                         linewidth=0.15,
                         edgecolor='black',
-                        color=line_color[data_group][prop_pos+1],
-                        s=mark_size[data_group][prop_pos+1],
-                        marker=mark_style[data_group][prop_pos+1],
-                        zorder=zorder[prop_pos+1],
+                        color=line_color[data_group][prop_pos],
+                        s=mark_size[data_group][prop_pos],
+                        marker=mark_style[data_group][prop_pos],
+                        zorder=zorder[data_group][prop_pos],
                         alpha=line_alpha[data_group][prop_pos]) 
                         
             
-        elif style_plot[data_pos] == 's-l':
-            if zorder[data_pos] == 0:
-                zorder[data_pos] = 1
+        elif style_plot[data_group][data_pos] == 's-l':
+            if zorder[data_group][data_pos] == 0:
+                zorder[data_group][data_pos] = 1
                 
             if y_axis_sides == 'left' or y_axis_sides == 'both':    
                 ax.scatter(x_data_bottom,
                         y_data_left,
-                        label=f'{label_list[data_pos]}',
+                        label=f'{label_list[data_group][data_pos]}',
                         linewidth=0.15,
                         edgecolor='black',
-                        color=line_color[prop_pos],
-                        s=mark_size[prop_pos],
-                        marker=mark_style[prop_pos],
-                        zorder=zorder[prop_pos])
+                        color=line_color[data_group][prop_pos],
+                        s=mark_size[data_group][prop_pos],
+                        marker=mark_style[data_group][prop_pos],
+                        zorder=zorder[data_group][prop_pos])
 
                 ax.plot(x_data_bottom,
                         y_data_left,
                         linewidth=0.5,
-                        color=line_color[prop_pos],
-                        linestyle=line_style[prop_pos],
-                        zorder=zorder[prop_pos]-1)
+                        color=line_color[data_group][prop_pos],
+                        linestyle=line_style[data_group][prop_pos],
+                        zorder=zorder[data_group][prop_pos]-1)
                 
             if y_axis_sides == 'right' or y_axis_sides == 'both':
                 axyrig.scatter(x_data_bottom,
                         y_data_right,
-                        label=f'{label_list[data_pos]}',
+                        label=f'{label_list[data_group][data_pos]}',
                         linewidth=0.15,
                         edgecolor='black',
-                        color=line_color[prop_pos],
-                        s=mark_size[prop_pos],
-                        marker=mark_style[prop_pos],
-                        zorder=zorder[prop_pos])
+                        color=line_color[data_group][data_pos+1],
+                        s=mark_size[data_group][data_pos+1],
+                        marker=mark_style[data_group][data_pos+1],
+                        zorder=zorder[data_group][data_pos+1])
 
                 axyrig.plot(x_data_bottom,
                         y_data_right,
                         linewidth=0.5,
-                        color=line_color[prop_pos],
-                        linestyle=line_style[prop_pos],
-                        zorder=zorder[prop_pos]-1)
+                        color=line_color[data_group][data_pos+1],
+                        linestyle=line_style[data_group][data_pos+1],
+                        zorder=zorder[data_group][data_pos+1]-1)
                 
             
-        elif style_plot[data_pos] == 'line':
+        elif style_plot[data_group][data_pos] == 'line':
             if y_axis_sides == 'left' or y_axis_sides == 'both':  
                 ax.plot(x_data_bottom,
                         y_data_left,
-                        label=f'{label_list[data_pos]}',
-                        color=line_color[prop_pos],
-                        linestyle=line_style[prop_pos],
-                        linewidth=width_style[prop_pos],
-                        zorder=zorder[prop_pos],
-                        alpha=line_alpha[prop_pos])
+                        label=f'{label_list[data_group][data_pos]}',
+                        color=line_color[data_group][prop_pos],
+                        linestyle=line_style[data_group][prop_pos],
+                        linewidth=width_style[data_group][prop_pos],
+                        zorder=zorder[data_group][prop_pos],
+                        alpha=line_alpha[data_group][prop_pos])
             if y_axis_sides == 'right' or y_axis_sides == 'both':  
                 axyrig.plot(x_data_bottom,
                         y_data_left,
-                        label=f'{label_list[data_pos]}',
-                        color=line_color[prop_pos],
-                        linestyle=line_style[prop_pos],
-                        linewidth=width_style[prop_pos],
-                        zorder=zorder[prop_pos],
-                        alpha=line_alpha[prop_pos])
-                
-                
+                        label=f'{label_list[data_group][data_pos+1]}',
+                        color=line_color[data_group][data_pos+1],
+                        linestyle=line_style[data_group][data_pos+1],
+                        linewidth=width_style[data_group][data_pos+1],
+                        zorder=zorder[data_group][data_pos+1],
+                        alpha=line_alpha[data_group][data_pos+1])
+
+
+
         # Para rellenar los areas
         if fill_area[0] == True:
             fill_max = max(max(row) for row in y_data)
@@ -380,9 +409,9 @@ def plot_gen(subplots = (1,1),
                 ax.fill_between(x_data[data_pos],y_data[data_pos],fill_max,
                                     color='black', alpha=fill_area[2],
                                     lw = 0)
+        
 
-
-                
+        
         if point_lab[0] == True:
             # Text position in a tuple at 3rd pos
             if len(point_lab)<3 or (len(point_lab)>=3 and len(point_lab[2])==0):
@@ -411,7 +440,7 @@ def plot_gen(subplots = (1,1),
             elif len(point_lab)>=6 and point_lab[5] != None:
                 lab_color = point_lab[5]
             
-            if style_plot[data_pos] == 'sct':
+            if style_plot[data_group][data_pos] == 'sct':
                 if len(point_lab)<5 or (len(point_lab)>=5 and len(point_lab[4])==0):
                     for tex_pos in range(len(x_data[0])):
                         point_lab_x = point_lab[2][tex_pos][0]
@@ -431,7 +460,7 @@ def plot_gen(subplots = (1,1),
                     else:
                         pass
                     
-            if style_plot[data_pos] == 'line':
+            if style_plot[data_group][data_pos] == 'line':
                 if len(point_lab)<5 or (len(point_lab)>=5 and len(point_lab[4])==0):
                         ax.annotate(point_lab[1][data_pos], (x_data[data_pos][0], y_data[data_pos][0]),
                                     fontsize=point_lab_size,xytext=(point_lab_x,point_lab_y),textcoords='offset pixels',
@@ -467,7 +496,7 @@ def plot_gen(subplots = (1,1),
                             fontsize=point_tex_size,xytext=(0,0),textcoords='offset pixels',
                             color=tex_col,rotation=rot_ang)
 
-
+        
 
         if back_color != None:
             ax.set_facecolor(back_color)    
@@ -493,6 +522,7 @@ def plot_gen(subplots = (1,1),
         ######################################################################
         
         
+        
         ###------------------X BOTTOM AXIS------------------###
         #######################################################
         
@@ -506,6 +536,8 @@ def plot_gen(subplots = (1,1),
                     ax.set_xlim(left=x_lim[0])
                 elif len(x_lim) == 1 and isinstance(x_lim[1], (int, float)):
                     ax.set_xlim(right=x_lim[1])
+        
+        
         
         # Si se dan los limites de ticks se ponen sino se calculan
         if x_ticks_lim != 'plt':
@@ -533,7 +565,6 @@ def plot_gen(subplots = (1,1),
         if x_invert == True:
             ax.invert_xaxis()
 
-
         ###------------------X TOP AXIS------------------###
         ####################################################
         
@@ -560,7 +591,7 @@ def plot_gen(subplots = (1,1),
         
             axxtop.set_xlabel(f'{x_axis_label[data_group][1]}',fontsize=axis_font_size,labelpad=12)
             
-        elif x_axis_sides == 'bottom':
+        elif x_axis_sides == 'bottom' and sub_plot_cost == True:
             # Creamos el eje
             axxtop = ax.secondary_xaxis('top')
             
@@ -571,8 +602,14 @@ def plot_gen(subplots = (1,1),
             if x_secaxix_ticks == False:
                 axxtop.xaxis.set_major_formatter(FormatStrFormatter(''))
         
+            axxtop.xaxis.set_major_locator(FixedLocator(axxbot_ticks))
+            
+            minor_ticks = ax.xaxis.get_minorticklocs()
+            axxtop.xaxis.set_minor_locator(FixedLocator(minor_ticks))
+            
             # Numero de decimales en los ticks
             axxtop.xaxis.set_major_formatter(FormatStrFormatter(f'%.{x_ticks_dec}f'))
+    
         
         # Escala logarítmica si se indica
         if x_log_scale == True:
@@ -583,19 +620,20 @@ def plot_gen(subplots = (1,1),
             axxtop.invert_xaxis()
 
 
+
         ###------------------Y LEFT AXIS------------------###
         ####################################################
         
         if y_axis_color == True:
-            y_bot_axis_color = line_color[data_group][prop_pos]
+            y_left_axis_color = line_color[data_group][prop_pos_l]
         else:
-            y_bot_axis_color = 'black'
-            
+            y_left_axis_color = 'black'
+        
         if y_axis_sides == 'both':
-            ax.set_ylabel(f'{y_axis_label[data_group][0]}',fontsize=axis_font_size,
-                          labelpad=10, color=y_bot_axis_color)
+            ax.set_ylabel(y_axis_label[data_group][prop_pos_l],fontsize=axis_font_size,
+                        labelpad=10, color=y_left_axis_color)
         else:
-            ax.set_ylabel(f'{y_axis_label[data_group]}',fontsize=axis_font_size,labelpad=10)
+            ax.set_ylabel(y_axis_label[data_group][prop_pos_l],fontsize=axis_font_size,labelpad=10)
         
         # Si se limita el eje Y
         if y_lim != None and y_lim != 'plt' and len(y_lim)>0:
@@ -606,12 +644,11 @@ def plot_gen(subplots = (1,1),
                 elif len(y_lim) == 1 and isinstance(y_lim[1], (int, float)):
                     ax.set_ylim(top=y_lim[1])
                     
-        
-        
         # Datos para plotear
-        y_axis_l_data = y_data_left
-        y_axis_r_data = y_data_right
-        
+        y_axis_l_data = np.copy(y_data_left)
+        if y_axis_sides == 'both':
+            y_axis_r_data = np.copy(y_data_right)   
+
         # Si tenemos eje secundario diferente
         #if y_axis_diff == True:
             
@@ -619,7 +656,7 @@ def plot_gen(subplots = (1,1),
             #del y_axis_l_data[y_axis_diff_val_pos-1]
         
         # Si se dan los limites de ticks se ponen sino se calculan
-        if y_ticks_lim != 'plt':
+        if y_ticks_lim != 'plt' and sub_plot_cost == True:
             if y_ticks_lim != None:
                 ax.set_yticks(np.linspace(min(y_ticks_lim), max(y_ticks_lim), y_ticks_num))
             elif y_lim != None and y_lim != 'plt' and y_lim != None:
@@ -627,15 +664,15 @@ def plot_gen(subplots = (1,1),
             else:
                 #y_min = min(min(row) for row in y_axis_l_data)
                 #y_max = max(max(row) for row in y_axis_l_data)
-                y_min = min(y_axis_l_data)
-                y_max = max(y_axis_l_data)
+                y_min = np.nanmin(y_axis_l_data)
+                y_max = np.nanmax(y_axis_l_data)
                 y_ticks_l_list = (np.linspace(y_min/y_con_factor, y_max/y_con_factor, y_ticks_num)).tolist()
                 ax.set_yticks(y_ticks_l_list)
                     
         #ax.set_ymargin(0.1)
         ax.yaxis.set_major_formatter(FormatStrFormatter(f'%.{y_ticks_dec}f'))
         ax.yaxis.set_minor_formatter(plt.NullFormatter())   
-        ax.minorticks_on()
+        #ax.minorticks_on()
 
         # Escala logarítmica si se indica
         if y_log_scale == True:
@@ -647,7 +684,7 @@ def plot_gen(subplots = (1,1),
 
         # Color para los ejes
         if y_axis_color == True:
-            ax.tick_params(axis='y', labelcolor=line_color[data_group][prop_pos])
+            ax.tick_params(axis='y', labelcolor=y_left_axis_color)
 
         ###------------------Y RIGHT AXIS------------------###
         ####################################################
@@ -655,9 +692,9 @@ def plot_gen(subplots = (1,1),
         # Si no tenemos eje secundario diferente creamos uno
         # que es igual que el izquierdo
         if y_axis_color  == True:
-            y_top_axis_color = line_color[data_group][prop_pos+1]
+            y_right_axis_color = line_color[data_group][prop_pos_r]
         else:
-            y_top_axis_color = 'black'
+            y_right_axis_color = 'black'
         
         if y_axis_diff == False:
             # Si no tenemos eje secundario seguimos como siempre
@@ -666,8 +703,8 @@ def plot_gen(subplots = (1,1),
         else:
             
             # Nombre del eje secundario diferente
-            axyrig.set_ylabel(f'{y_axis_label[data_group][1]}',fontsize=axis_font_size,labelpad=10,
-                              color=y_top_axis_color)
+            axyrig.set_ylabel(f'{y_axis_label[data_group][prop_pos_r]}',fontsize=axis_font_size,labelpad=10,
+                            color=y_right_axis_color)
         
         # Obteniendo los ticks
         # Si no tenemos eje secundario diferente, como siempre
@@ -678,12 +715,14 @@ def plot_gen(subplots = (1,1),
         else:
             # Si tenemos un eje secundario diferente
             # volvemos a calcular los ticks
-            y_min = min(y_data_right)
-            y_max = max(y_data_right)
+            y_min = np.nanmin(y_data_right)
+            y_max = np.nanmax(y_data_right)
             y_ticks_r_list = (np.linspace(y_min/y_con_factor, y_max/y_con_factor, y_ticks_num)).tolist()
             axyrig.set_yticks(y_ticks_r_list)
+            axyrig.yaxis.set_major_locator(FixedLocator(y_ticks_r_list))
             #axyrig.set_ymargin(0.1)
-            
+
+        
         axyrig.yaxis.set_major_formatter(FormatStrFormatter(f'%.{y_ticks_dec}f'))
         
         if y_axis_diff == True:
@@ -709,7 +748,7 @@ def plot_gen(subplots = (1,1),
             
         # Color para los ejes
         if y_axis_color == True:
-            axyrig.tick_params(axis='y', labelcolor=line_color[data_group][prop_pos+1])
+            axyrig.tick_params(axis='y', labelcolor=y_right_axis_color)
 
         
         ###------------------OTHER PROPERTIES------------------###
@@ -728,25 +767,41 @@ def plot_gen(subplots = (1,1),
                 
         # Dando espacio si se pone el título
         fig.tight_layout(pad=1)
+    
+
+    
+        ###------------SAVING THE PLOT INDIVIDUALLY-----------###
+        #########################################################   
+        
+        if subplots_save_ind == True:
+
+            if subplots_conf == True:
+                fig_path = f'{fig_save_path}/{fig_name}_{subplots_titles[data_pos]}'
+            else:
+                fig_path = f'{fig_save_path}/{fig_name}'
             
+            plt.savefig(f'{fig_path}.{fig_format}',format=fig_format, dpi=1000, bbox_inches='tight')   
+            
+            if plot_show == True:
+                plt.show()
+                
+            plt.close()
+        
+        if subplots_conf == False:    
+            sub_plot_cost = False             
     
     ###------------------SAVING THE PLOT------------------###
     #########################################################   
-            
-    # Guardando los archivos en pdf o png desde la terminal.
-    # Por defecto en pdf, para guardar en png usar -png en terminal
-    fig_path = f'{fig_save_path}/{fig_name}'
-    
-    if fig_format == 'png':
-        plt.savefig(fig_path+'.png',format='png', dpi=1000, bbox_inches='tight')   
-        
-    elif fig_format == 'pdf':
-        plt.savefig(fig_path+'.pdf',format='pdf', dpi=1000, bbox_inches='tight')   
-    
-    if plot_show == True:
-        plt.show()
-    
-    # Cerrando el plot
-    plt.close()   
-    
+    if subplots_save_ind == False:
 
+        # Guardando los archivos en pdf o png desde la terminal.
+        # Por defecto en pdf, para guardar en png usar -png en terminal
+        fig_path = f'{fig_save_path}/{fig_name}'
+        
+        plt.savefig(f'{fig_path}.{fig_format}',format=fig_format, dpi=1000, bbox_inches='tight')   
+            
+        if plot_show == True:
+            plt.show()
+        
+        # Cerrando el plot
+        plt.close()   

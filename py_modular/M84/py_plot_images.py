@@ -8,9 +8,7 @@ from matplotlib.ticker import FormatStrFormatter
 import functools
 
 from py_open_fits import open_fits
-from py_mag_counts_convert import fits_mag_to_counts, fits_counts_to_mag, values_counts_to_mag
-from py_px_kpc import px_to_kpc,kpc_to_px,arcsec_to_kpc,kpc_to_arcsec
-
+from py_convert_functions import values_counts_to_mag,px_to_kpc,kpc_to_px
 
 
 def plot_images(gal_img,
@@ -21,7 +19,7 @@ def plot_images(gal_img,
                 mag=False,res=False,
                 conver_to_mag=False,
                 counts=True,
-                galaxy_folder_path='.',
+                output_path='.',
                 log_scale = False):
     
     # Enable LaTeX rendering
@@ -154,6 +152,6 @@ def plot_images(gal_img,
         img_format = 'pdf'
 
     fig_name = f'{fig_name}.{img_format}'
-    fig_path = f'{galaxy_folder_path}/{fig_name}'
+    fig_path = f'{output_path}/{fig_name}'
     plt.savefig(f'{fig_path}',format=img_format, dpi=1000, bbox_inches='tight')
     plt.close()

@@ -1,8 +1,3 @@
-'''
-- Implementar que si se da un sistema de filtos se ploteen todos los que estén disponibles
-'''
-
-
 import pandas as pd
 from itertools import groupby
 import sys
@@ -19,6 +14,8 @@ from py_create_folder import create_folder
 from py_plot_general_sub import plot_gen
 from py_plot_configration import plot_prop_conf
 from py_cronometro import Cronometro
+from py_config_argparse import argparse_values
+from py_version_control_NV import version_directory, version_file, version_file_last
 
 #-------------------FUNCTIONS-------------------#
 
@@ -28,27 +25,6 @@ def get_key(val,dic):
     for key, value in dic.items():
         if val == value:
             return key
-
-def load_configuration(conf_file):
-    conf_var = {}
-    with open(conf_file, "r") as file:
-        for line in file:
-            line = line.split("#")[0].strip()  # Eliminar comentarios y espacios
-            if line:  # Ignorar líneas vacías
-                match = re.match(r"^([A-Z_]+)\s*=\s*(.+)", line)  # Buscar VARIABLE = VALOR
-                if match:
-                    key, value = match.groups()
-                    value = value.strip()
-                    
-                    # Convertir valores: int si es número, lista o tupla si tiene formato correcto
-                    try:
-                        value = ast.literal_eval(value)  # Convierte '0' a 0, '["x"]' a lista, etc.
-                    except (ValueError, SyntaxError):
-                        pass  # Si no es un número o estructura reconocible, se deja como string
-                    
-                    conf_var[key] = value
-    
-    return conf_var
 
 #-------------------MAIN CODE-------------------#
 
@@ -267,6 +243,8 @@ def plots_filter(filter_dict = {},
                 # If filter is in the list of filters to plot
                 if filt in filters_to_plot and filt not in filter_set:
                     
+                    plots_positions.append((rows,cols))
+                    
                     # Avoiding to plot the same filter twice
                     filter_set.add(filt)
                         
@@ -278,7 +256,6 @@ def plots_filter(filter_dict = {},
             
                     # Determining the order and the positions of the plots
                     plot_order.append(((filter_system,filt),(rows,cols)))
-                    plots_positions.append((rows,cols))
                     
                     # Obtainig the data for the plot
                     x_data = filter_dict[filter_system][filt]['z']
@@ -299,12 +276,15 @@ def plots_filter(filter_dict = {},
                         total_col = total_col_max
                     
                     # Correction for systems with more than 
-                    # 6 filters to plot by adding one extra row
-                    cols += 1
-                    if cols // 6 != 0:
-                        cols = 0
+                    # max_col filters to plot by adding one extra row
+                    if cols // plot_max_columns != 0 and cols == plot_max_columns:
                         rows += 1
-                        
+                        cols = 0
+                        plots_positions.pop()
+                        plots_positions.append((rows,cols))
+                    else:
+                        cols += 1
+                    
             # New row for each filter system
             rows += 1
         
@@ -317,32 +297,46 @@ def plots_filter(filter_dict = {},
         # Total rows for the plot sheet
         total_row = rows
 
-        if len(filter_set) > 1:
+        # Figure save name and figure title depending on:
+        # If there is more than just one filter
+        if len(filter_set) > 1 and plot_save_mode == 0:
+            
+            # If plotted mangitudes are the same 
             if left_mag_prop['label'] == right_mag_prop['label']:
                 fig_name = f'{datacube_name_general}_{left_mag}'
-                fig_title = (f'\\textbf{{{programme_used}}} output \\textbf{{{left_mag_prop["label"]}}} ' 
+                fig_title = (f'\\textbf{{{analysis_programme}}} output \\textbf{{{left_mag_prop["label"]}}} ' 
                             f'for galaxy \\textbf{{{galaxy_name}}}') 
+                
+            # If there are different magnitudes
             else:
-                # Figure saved name and figure title
                 fig_name = f'{datacube_name_general}_{left_mag}_{right_mag}'
-                fig_title = (f'\\textbf{{{programme_used}}} output \\textbf{{{left_mag_prop["label"]}}} and ' 
+                fig_title = (f'\\textbf{{{analysis_programme}}} output \\textbf{{{left_mag_prop["label"]}}} and ' 
                         f'\\textbf{{{right_mag_prop["label"]}}} for galaxy \\textbf{{{galaxy_name}}}')
-            
+        
+        # If there is only one filter
         else:
+            
+            # If plotted mangitudes are the same 
             if left_mag_prop["label"] == right_mag_prop["label"]:
                 fig_name = f'{datacube_name_general}_{left_mag}'
-                fig_title = (f'\\textbf{{{programme_used}}} output \\textbf{{{left_mag_prop["label"]}}}\n' 
+                fig_title = (f'\\textbf{{{analysis_programme}}} output \\textbf{{{left_mag_prop["label"]}}}\n' 
                             f'for galaxy \\textbf{{{galaxy_name}}}') 
             else:
                 fig_name = f'{datacube_name_general}_{left_mag}_{right_mag}'
-                fig_title = (f'\\textbf{{{programme_used}}} output \\textbf{{{left_mag_prop["label"]}}} and \n' 
+                fig_title = (f'\\textbf{{{analysis_programme}}} output \\textbf{{{left_mag_prop["label"]}}} and \n' 
                         f'\\textbf{{{right_mag_prop["label"]}}} for galaxy \\textbf{{{galaxy_name}}}')
-                
+        
+        if plot_save_mode == 0:
+            subplots_save_ind = False
+        else:
+            subplots_save_ind = True
 
         # Plotting the filters with this configuration
-        plot_gen(subplots=(total_row,total_col),  
+        plot_gen(subplots_conf = True,
+                subplots_num=(total_row,total_col),  
                 subplots_positions = plots_positions,
                 subplots_titles = filter_suptitle,
+                subplots_save_ind = subplots_save_ind,
                 legend_plot=False,
                 x_data = x_sub_data,
                 y_data = y_sub_data,
@@ -350,7 +344,7 @@ def plots_filter(filter_dict = {},
                 fig_name = fig_name,
                 fig_title = fig_title,
                 fig_save_path = plot_path,
-                x_axis_label = [('Redshift','Emitted Wavelength [Å]')],
+                x_axis_label = [('Redshift','Emitted Wavelenght [Å]')],
                 x_ticks_dec = 2,
                 x_axis_sides = 'both',
                 x_top_axis_dec = 1,
@@ -363,7 +357,9 @@ def plots_filter(filter_dict = {},
                 line_alpha=[(left_mag_prop['alpha'],right_mag_prop['alpha'])],
                 mark_style = [(left_mag_prop['marker'],right_mag_prop['marker'])],
                 mark_size = [(left_mag_prop['marker_size'],right_mag_prop['marker_size'])],
-                scatter_plot=True,
+                style_plot=[(left_mag_prop['plot_style'],right_mag_prop['plot_style'])],
+                label_list = [(left_mag_prop['leg_lab'],right_mag_prop['leg_lab'])],
+                zorder=[(left_mag_prop['zorder'],right_mag_prop['zorder'])],
                 plot_show=False)
 
 
@@ -421,12 +417,16 @@ def plots_mag(filter_dict = {},
         # for a given system
         rows = 0
         
+        
         x_labels = []
+        mag_plot_style = []
+        mag_leg_label = []
         mag_labels = []
         mag_colors = []
         mag_markers = []
         mag_marker_sizes = []
         mag_alphas = []
+        mag_zorder = []
         
         # For each pair of magnitudes in the same
         # sheet of plots
@@ -434,9 +434,13 @@ def plots_mag(filter_dict = {},
             
             # Obtaining plot properties for each magntiude in
             # the correct format
-            x_labels.append(('Redshift','Emitted Wavelength [Å]'))
+            x_labels.append(('Redshift','Emitted Wavelenght [Å]'))
             mag_labels.append((plot_prop_dict[mag_pair[0]]['label'],
                                plot_prop_dict[mag_pair[1]]['label']))
+            mag_plot_style.append((plot_prop_dict[mag_pair[0]]['plot_style'],
+                               plot_prop_dict[mag_pair[1]]['plot_style']))
+            mag_leg_label.append((plot_prop_dict[mag_pair[0]]['leg_lab'],
+                               plot_prop_dict[mag_pair[1]]['leg_lab']))
             mag_colors.append((plot_prop_dict[mag_pair[0]]['color'],
                                plot_prop_dict[mag_pair[1]]['color']))
             mag_markers.append((plot_prop_dict[mag_pair[0]]['marker'],
@@ -445,6 +449,8 @@ def plots_mag(filter_dict = {},
                                plot_prop_dict[mag_pair[1]]['marker_size']))
             mag_alphas.append((plot_prop_dict[mag_pair[0]]['alpha'],
                                plot_prop_dict[mag_pair[1]]['alpha']))
+            mag_zorder.append((plot_prop_dict[mag_pair[0]]['zorder'],
+                               plot_prop_dict[mag_pair[1]]['zorder']))
             
             
             # To avoiding duplicate filters
@@ -487,17 +493,21 @@ def plots_mag(filter_dict = {},
                     # Tuple of y data values added to the y values list
                     y_sub_data.append((y_data_left,y_data_right))
                     
+                    
                     # Determining the number of columns for the plot
                     total_col_max += 1
                     if total_col_max > total_col:
                         total_col = total_col_max
                     
                     # Correction for systems with more than 
-                    # 6 filters to plot by adding one extra row
-                    cols += 1
-                    if cols // 6 != 0:
-                        cols = 0
+                    # max_col filters to plot by adding one extra row
+                    if cols // plot_max_columns != 0 and cols == plot_max_columns:
                         rows += 1
+                        cols = 0
+                        plots_positions.pop()
+                        plots_positions.append((rows,cols))
+                    else:
+                        cols += 1
             
             # New row for each filter system        
             rows += 1
@@ -506,19 +516,19 @@ def plots_mag(filter_dict = {},
         total_row = rows
         
         fig_name = f'{datacube_name_general}_{filter_system}'
-        fig_title = (f'\\textbf{{{programme_used}}} output for galaxy \\textbf{{{galaxy_name}}} '
+        fig_title = (f'\\textbf{{{analysis_programme}}} output for galaxy \\textbf{{{galaxy_name}}} '
                      f'with \\textbf{{{filter_system}}} filter system')
         
         if len(filter_set) == 0:
             break
         
-        elif len(filter_set) == 1:
-            fig_title = (f'\\textbf{{{programme_used}}} output for galaxy \\textbf{{{galaxy_name}}} \n'
+        elif len(filter_set) == 1 or plot_save_mode==1:
+            fig_title = (f'\\textbf{{{analysis_programme}}} output for galaxy \\textbf{{{galaxy_name}}} \n'
                      f'with \\textbf{{{filter_system}}} filter system')
         
-        
         # Plotting the filters with this configuration
-        plot_gen(subplots=(total_row,total_col),  
+        plot_gen(subplots_conf = True,
+                subplots_num=(total_row,total_col),
                 subplots_positions = plots_positions,
                 subplots_titles = filter_suptitle,
                 subplots_split_gruoups = len(filter_dict.keys()),
@@ -544,7 +554,9 @@ def plots_mag(filter_dict = {},
                 line_alpha=mag_alphas,
                 mark_style = mag_markers,
                 mark_size = mag_marker_sizes,
-                scatter_plot=True,
+                style_plot=mag_plot_style,
+                label_list=mag_leg_label,
+                zorder=mag_zorder,
                 plot_show=False)           
 
 
@@ -553,12 +565,13 @@ def plots_mag(filter_dict = {},
 
 if __name__ == '__main__':
     
-    #cronometro = Cronometro()
+    cronometro = Cronometro()
     #cronometro.iniciar()
     
-    # General information
-    
-    programme_used = 'Galfit'
+    # Obtaingin configuration values
+    (analysis_programme,system_list_mode,filters_list_mode,
+     mag_pairs_mode,plot_mode,plot_save_mode,plot_max_columns,
+     plot_analysis_version) = argparse_values(phase='plot')
 
     # getting the current working directory
     cwd = os.getcwd()
@@ -577,74 +590,34 @@ if __name__ == '__main__':
     # Datacubes general name for the galaxy without the filter name
     datacube_name_general = '_'.join((datacube_name_list[0].split('.fits')[0]).split('_')[:-1])
     
+    
+    # Obtaining the latest version runned
+    if plot_analysis_version == 'latest':
+        last_version = version_file_last(f'txt_{galaxy_name}_version.txt')
+    else:
+        last_version = plot_analysis_version
+        
+    if last_version < 10:
+            last_version = f'0{last_version}'
+            
+    folder_version_name = f'{galaxy_name}_analysis_{analysis_programme}_V{last_version}'
+    folder_version_path = f'{cwd}/{folder_version_name}'
+        
     # Path to the csv with the data
-    csv_folder_path = f'{cwd}/{datacube_name_general}_csv'
+    csv_folder_name = f'{folder_version_name}_csv'
+    csv_folder_path = f'{folder_version_path}/{csv_folder_name}'
     
     datacube_csv_filter_list = []
     for datacube_name in sorted(os.listdir(csv_folder_path)):
         if '.csv' in datacube_name:
             filt_or_name = datacube_name.split('.fits')[0].split('_')[-2]
             datacube_csv_filter_list.append(filt_or_name)
-            
-    
+
     # Path to the folder of the plots
-    plot_path = f'{cwd}/{datacube_name_general}_plots'
+    plot_folder_name = f'{folder_version_name}_plots'
+    plot_path = f'{folder_version_path}/{plot_folder_name}'
     create_folder(plot_path,overwrite=False)
-    
-    
-    # Plot options configurations
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-ps','--plot_system', type=int, nargs='?', const=0,
-                        help=(f'Systems of filters to plot:\n'
-                              f'=0: Automatic, all vailable systems are plotted (Default);\n'
-                              f'=["","",...], list of the specific systems to plot'))
-    parser.add_argument('-pf','--plot_filter', type=int, nargs='?', const=0,
-                        help=(f'Filters to plot:\n'
-                              f'=0: Automatic, all vailable filters are plotted (Default);\n'
-                              f'=["","",...], list of the specific filters to plot'))
-    parser.add_argument('-pmag','--plot_magnitude', type=int, nargs='?', const=0,
-                        help=(f'Magnitudes to plot:\n'
-                              f'=0: Automatic, all vailable magnitudes are plotted (Default);\n'
-                              f'=[("",""),...], list of tuples of the specific magnitudes to plot'))
-    parser.add_argument('-pm','--plot_mode', type=int, nargs='?', const=2,
-                        help=(f'Mode of plot data:\n'
-                              f'=0: Filter, each filter will be plotted for a pair of magnitudes in the same sheet;\n'
-                              f'=1: Magnitude, all the magnitudes will be plot for each filter system;\n'
-                              f'=2: Both modes are plotted (Default);\n'))
-    parser.add_argument('-conf','--confifile', type=str, 
-                        help=(f'Path to the configuration file. If this flag is marked,\n'
-                              f'configuration file will be use as deafult option'))
-    
-    args = parser.parse_args()
-
-    # If there is a configuration file then it is used
-    # as default configurator
-    if args.confifile:
-        conf_var = load_configuration(args.confifile)
-        system_list_mode = conf_var['PLOT_SYSTEM']
-        filters_list_mode = conf_var['PLOT_FILTER']
-        mag_pairs_mode = conf_var['PLOT_MAG']
-        plot_mode = conf_var['PLOT_MODE']
-    else:
-        args.plot_system = 0
-        args.plot_filter = 0
-        args.plot_magnitude = 0
-        args.plot_mode = 2
         
-    # If there is no configuration file the comand flags
-    # are used
-    if args.plot_system != None:
-        system_list_mode = args.plot_system
-    if args.plot_filter != None:
-        filters_list_mode = args.plot_filter
-    if args.plot_magnitude != None:
-        mag_pairs_mode = args.plot_magnitude
-    if args.plot_mode != None:
-        plot_mode = args.plot_mode
-        
-    #print(system_list_mode,filters_list_mode,mag_pairs_mode,plot_mode)
-
-
     # The names of the filter systems in alphabetic order
     # Dictionary with the corresponding wavelength of each filter
     # http://svo2.cab.inta-csic.es/theory/fps/               
@@ -686,7 +659,16 @@ if __name__ == '__main__':
     mag_plot_prop_dict = plot_prop_conf(mag_pairs_plot)
     
     # Plot mode
-    if plot_mode == 0 or plot_mode == 2:
+    if plot_mode == 0 or plot_mode == 2 or plot_save_mode == 1:
+        # If all filters have to be plotted in the same sheet
+        plots_filter(filter_dict=df_filter_dict_short, 
+                    filters_to_plot=filters_to_plot,
+                    mag_pairs_plot = mag_pairs_plot,
+                    wl_dict=df_filter_dict_short_wl,
+                    plot_prop_dict=mag_plot_prop_dict)
+    
+    if (plot_mode == 0 or plot_mode == 2) and plot_save_mode == 2:
+        plot_save_mode = 0
         # If all filters have to be plotted in the same sheet
         plots_filter(filter_dict=df_filter_dict_short, 
                     filters_to_plot=filters_to_plot,

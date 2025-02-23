@@ -30,7 +30,7 @@ class Cronometro:
             
             # Mover el cursor a la última línea y sobrescribir
             sys.stdout.write(f"\033[{shutil.get_terminal_size().lines}E")  
-            sys.stdout.write(f"\033[KTiempo transcurrido: {tiempo_formateado}".ljust(columnas) + "\r")
+            sys.stdout.write(f"\033[KTime running: {tiempo_formateado}".ljust(columnas) + "\r")
             sys.stdout.flush()
             time.sleep(1)
 
@@ -46,7 +46,7 @@ class Cronometro:
 
         # Mostrar el tiempo total al finalizar
         sys.stdout.write(f"\033[{shutil.get_terminal_size().lines}E")  
-        sys.stdout.write(f"\033[KTiempo total: {tiempo_formateado}\n".ljust(columnas))
+        sys.stdout.write(f"\033[KTotal time: {tiempo_formateado}\n".ljust(columnas))
         sys.stdout.flush()
 
     def _formatear_tiempo(self, segundos):

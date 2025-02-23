@@ -5,8 +5,6 @@ Implementar:
     - Comprobar lo de los angulos de iso par alas CI si coinciden 
 '''
 
-
-
 import numpy as np
 import pandas as pd
 import scipy as scp
@@ -39,19 +37,20 @@ from py_galfit_initial_params_script import create_initiaL_params
 from py_galfit_script import create_script
 from py_galfit_kpc_correction import kpc_correction
 
-from py_plot_general import plot_gen
 from py_open_fits import open_fits
 from py_create_folder import create_folder
-from py_mag_counts_convert import fits_mag_to_counts, fits_counts_to_mag, values_counts_to_mag
-from py_rad_deg import deg_to_rad,rad_to_deg,rad_to_deg_abs
+from py_convert_functions import fits_mag_to_counts, values_counts_to_mag, rad_to_deg_abs
 from py_round_number import round_number
 from py_max_center_value import max_center_value
 from py_dataframe import galfit_init_dataframe, galfit_create_dataframe
 from py_isophote_fitting import isophote_fitting
 from py_initial_condition import initial_conditions
+from py_config_argparse import argparse_values
+from py_version_control_NV import version_directory, version_file, version_file_last
+from py_cronometro import Cronometro
 
 
-def main():
+def analisys():
     
     '''
     This function contains the analysis process
@@ -60,13 +59,16 @@ def main():
     # The analysis is carried out for each datacube
     for datacube_pos,datacube_name in enumerate(datacube_name_list):
         
+        ###------------------MANIPULATING DATACUBE------------------###
+        ###############################################################
+        
         datacube_name_noext = datacube_name.split('.fits')[0]
         
         # Creating a directory with the datacube name to store the 
         # files produced during the analysis
-        datacube_folder_path = f'{cwd}/{datacube_name_noext}'
+        datacube_folder_path = f'{analysis_folder_path}/{datacube_name_noext}'
         create_folder(datacube_folder_path,
-                      overwrite=True)
+                      overwrite=False)
         
         # Copying the datacube from the original folder
         # to its corresponding folder
@@ -88,20 +90,28 @@ def main():
         # Redshift step of the datacube
         redshift_step = datacube_flux_hdr['CDELT3']
         
-        
-        #--------CREATING A DATAFRAME TO STORE THE DATA------#
+        ###------------------CREATING A DATAFRAME------------------###
+        ##############################################################
 
+        # Creating a dataframe to storing analysis data results
         df = galfit_init_dataframe()
 
-        # Export dataframe to text file
-        csv_file = open(f'{cwd}/{datacube_name_noext}_galfit.csv','w+')
+        # Export dataframe to text file for each datacube
+        csv_file_name = f'{datacube_name_noext}_{analysis_programme}.csv'
+        csv_file_path = open(f'{csv_folder_path}/{csv_file_name}','w+')
         
-        # We should analyse each frame separatelly
         
-        analysis_range = datacube_flux_data.shape[0]
-        #analysis_range = 3
+        ###------------------FRAME ANALYSIS------------------###
+        ########################################################
         
-        for frame_pos in range(analysis_range):
+        # Determinen frame analysing range
+        if analysis_range == 0:
+            frame_range = datacube_flux_data.shape[0]
+        else:
+            frame_range = analysis_range
+        
+        # Analysing each frame individually
+        for frame_pos in range(frame_range):
             
             # Obtaining the corresponding redshift of each frame
             redshift_value = round_number(frame_pos * redshift_step,2)
@@ -111,7 +121,7 @@ def main():
             
             frame_name = f'{datacube_name.split(".")[0]}_z{redshift_value:.2f}_counts.fits'
             frame_name_noext = frame_name.split('.fits')[0]
-            frame_path = f'{cwd}/{frame_name}'
+            frame_path = f'{analysis_folder_path}/{frame_name}'
                         
             # Depending on the used version we are going to use a median 
             # filter in order to reduce the image noise
@@ -129,24 +139,25 @@ def main():
             # Obtaining the center of the galaxy as the maximun central pixel value
             # Only for the first image
             max_pix_value_center, max_pix_value_center_pos = max_center_value(frame,crop_factor)
-            
 
             if frame_pos == 0:
-                
-                gal_iso_fit_csv_path = isophote_fitting(frame_path,max_pix_value_center_pos,cons=pxsc_zcal_const)
-                #gal_iso_fit_csv_path = './m84_VBIN018_SL_zSimJ_EucHab_z0.00_counts_isophote.csv'
-                gal_iso_fit_df = pd.read_csv(gal_iso_fit_csv_path)
-                break_pos, break_pos_bul, I_0_disk_in, h_disk_in, n_bul_in, r_e_bul_in, I_e_bul_in = initial_conditions(frame_name_noext,
-                                                                                                                        gal_iso_fit_df, 
-                                                                                                                        'sma', 
-                                                                                                                        'intens', 
-                                                                                                                        'intens_err',
-                                                                                                                        const=pxsc_zcal_const)
-                # Computing the mean values from the external partes of the galaxy
-                ell_mean_in = gal_iso_fit_df.loc[break_pos:, 'ellipticity'].mean()
-                ax_rat_in = round_number(1 - ell_mean_in,3)
-                pa_rad_mean_in = gal_iso_fit_df.loc[break_pos:, 'pa'].mean()
-                pa_deg_in = round_number(rad_to_deg_abs(pa_rad_mean_in)-90,3)
+
+                if initial_conditions_mode == 0:
+                    #gal_iso_fit_csv_path = isophote_fitting(frame_path,max_pix_value_center_pos,cons=pxsc_zcal_const,output_path=analysis_folder_path)
+                    gal_iso_fit_csv_path = f'{analysis_folder_path}/m84_VBIN018_SL_zSimJ_EucHab_z0.00_counts_isophote.csv'
+                    gal_iso_fit_df = pd.read_csv(gal_iso_fit_csv_path)
+                    break_pos, break_pos_bul, I_0_disk_in, h_disk_in, n_bul_in, r_e_bul_in, I_e_bul_in = initial_conditions(frame_name_noext,
+                                                                                                                            gal_iso_fit_df, 
+                                                                                                                            'sma', 
+                                                                                                                            'intens', 
+                                                                                                                            'intens_err',
+                                                                                                                            const=pxsc_zcal_const,
+                                                                                                                            output_path=analysis_folder_path)
+                    # Computing the mean values from the external partes of the galaxy
+                    ell_mean_in = gal_iso_fit_df.loc[break_pos:, 'ellipticity'].mean()
+                    ax_rat_in = round_number(1 - ell_mean_in,3)
+                    pa_rad_mean_in = gal_iso_fit_df.loc[break_pos:, 'pa'].mean()
+                    pa_deg_in = round_number(rad_to_deg_abs(pa_rad_mean_in)-90,3)
             
             
             # Obtaining the frame shape
@@ -159,17 +170,16 @@ def main():
             
             # Creating a script to run galfit
             script_name = f'{frame_name_noext}.script'
-            script_path = f'{cwd}/{script_name}'
+            script_path = f'{analysis_folder_name}/{script_name}'
             script_file = open(f'{script_path}','w+')
             
             # the ouput file name will be
             output_file = f'{frame_name_noext}_galfit.fits'
-            output_file_path = f'{cwd}/{output_file}'
+            output_file_path = f'{analysis_folder_name}/{output_file}'
         
             
             # For versions using inout methodology
-            if ('--inout' in sys.argv or '--medfilt_inout' in sys.argv or
-                '--original' not in sys.argv or '--medfilt' not in sys.argv):
+            if analysis_version == 'inout' or analysis_version == 'medinout':
     
                 # For all frames except for the first one we introduce the output 
                 # parameters of previous frame as input
@@ -211,7 +221,7 @@ def main():
                                 cons_file = constraints_file_name)
 
             # For versions not using inout methodology
-            elif '--original' in sys.argv or '--medfilt' in sys.argv:
+            elif 'original' in sys.argv or 'medfilt' in sys.argv:
 
                 # Initial parameters for every frame of the filter datacube
                 create_script(file=script_file,
@@ -233,9 +243,12 @@ def main():
             # closing the script file
             script_file.close()
 
+            os.chdir(analysis_folder_path)
+
             # runing galfit for the subframe fits with the corresponding
             subprocess.run(['galfit', script_name])
             
+            os.chdir(cwd)
         
             #-----OBTAINING THE PARAMETERS OF THE ANALYSIS----#
             
@@ -254,36 +267,48 @@ def main():
         
         df_string = df.to_csv(header=True, index=False, sep=',')
 
-        csv_file.write(df_string)
+        csv_file_path.write(df_string)
 
-        csv_file.close()
+        csv_file_path.close()
         
         #----ORGANIZING ALL THE CREATED FILES INTO NEW FOLRDES----#
         
         # moving all the output and created files to a folder in order to keep the order in the directory        
-        for output_file in sorted(os.listdir(cwd)):
-
+        for output_file in sorted(os.listdir(analysis_folder_path)):
+            
+            file_original_path = f'{analysis_folder_path}/{output_file}'
+            
             if '.csv' in output_file and 'galfit' in output_file:
-
-                shutil.copyfile(f'{cwd}/{output_file}',f'{csv_folder_path}/{output_file}')
+                file_destiny_path = f'{csv_folder_path}/{output_file}'
+                
+                shutil.copyfile(file_original_path,file_destiny_path)
 
             if ('.py' not in output_file and os.path.isdir(output_file) == False and
                 ('galfit.' in output_file or 'fit.' in output_file or datacube_name_noext in output_file)):
                 
-                os.replace(f'{cwd}/{output_file}', f'{datacube_folder_path}/{output_file}')
-
+                file_destiny_path = f'{datacube_folder_path}/{output_file}'
+                
+                if file_original_path != '/'.join(file_destiny_path.split('/')[:-1]):
+                
+                    os.replace(file_original_path, file_destiny_path)
 
 
 if __name__ == '__main__':
     
-    '''
-    This part of the code corresponds with global options
-
-    The variables defined here can be used for all the functions
-    '''
+    #############################################################
+    ###------------------GENERAL INFORMATION------------------###
+    #############################################################
+    
+    cronometro = Cronometro()
+    cronometro.iniciar()
     
     # Computing the total analysis time
     start_time = time.time()
+    
+    # Loading configuration
+    (analysis_programme,analysis_version,analysis_range,
+                version_continuation,version_control,psf,initial_conditions_mode,
+                pixel_scale,zcal_const,crop_factor) = argparse_values(phase='analysis')
     
     # Obtaining the current working directory
     # in which the programme is executed
@@ -308,50 +333,54 @@ if __name__ == '__main__':
     
     # We need the  pixel scale and the calibration constant to convert 
     # from counts to magnitudes
-    pixel_scale = 0.2 # arcsec/pix
-    zcal_const = 25
     pxsc_zcal_const = (pixel_scale,zcal_const)
     
-    crop_factor = 10
-
-    if '--version_control' in sys.argv:
-
-        # Checking the latest version run
-        version_file_path = f'{previus_cwd}/{galaxy_name}_version.txt'
-        version_file = open(f'{version_file_path}','r')
-        last_line_version_file = str(subprocess.check_output(['tail', '-1', version_file_path]))[2:-1]
-
-        folder_new_version_name = last_line_version_file.split(' # ')[0]
-        folder_new_version_path = f'{previus_cwd}/{folder_new_version_name}'
-
-        # Depending on the folder name a large PSF or a
-        # small psf will be created
-        folder_name_elements = folder_new_version_name.split('_')
-        version = folder_name_elements[1]
-
-    # PSF: Point Spread Function 
-
-    # Size of the PSF for galfit
-    if 'psf' not in sys.argv:
-    #if 'psf' not in folder_name_elements:
-        psf_size = 'large'
-    else:
-        psf_size = 'small'
+    
+    ###------------------VERSION CONTROL------------------###
+    #########################################################
+    
+    # Galaxy analysis new directory
+    next_version = '00'
+    version_base_name = f'{galaxy_name}_analysis_{analysis_programme}'
+    version_file_name = f'txt_{galaxy_name}_version.txt'
+    
+    # If version control is activated
+    if version_control == 1:
         
-    folder_new_version_path = cwd
-    version = 0
+        # Obtained the last runned version from the
+        # version file and the directory version name
+        prev_ver_file = version_file_last(version_file_name)
+        prev_ver_dir = version_directory(cwd,version_base_name)
+        
+        next_version = max(prev_ver_file,prev_ver_dir)+1
+        if next_version < 10:
+            next_version = f'0{next_version}'
+            
+    # Creating the version file and the version directory
+    version_file(galaxy_name,next_version,analysis_version,psf,archivo=version_file_name)
+    analysis_folder_name = f'{version_base_name}_V{next_version}'
+    analysis_folder_path = f'{cwd}/{analysis_folder_name}'
+    create_folder(analysis_folder_path)
 
+    ###------------------POINT SPREAD FUNCTION------------------###
+    ###############################################################
 
     # Name of the psf
-    psf_fits_name = f'psf_{galaxy_name}_{psf_size}_flux_norm.fits'
-    psf_fits_path = f'{folder_new_version_path}/{psf_fits_name}'
+    if psf == 'large':    
+        psf_fits_name = f'psf_{galaxy_name}_{psf}_flux_norm.fits'
+        psf_fits_path = f'{analysis_folder_path}/{psf_fits_name}'
+    elif psf == 'small':
+        psf_fits_name = f'psf_small_stacked_original_flux_norm.fits'
+        psf_fits_path_ori = f'{cwd}/{psf_fits_name}'
+        psf_fits_path = f'{analysis_folder_path}/{psf_fits_name}'
+        shutil.copyfile(f'{psf_fits_path_ori}',f'{psf_fits_path}')
+    else:
+        psf_fits_name = psf.split('/')[-1]
+        psf_fits_path = psf
 
-    # If an specific psf is not created for the galaxy
-    # it will be used a general small
-    if os.path.exists(f'{psf_fits_path}') == False:
 
-        psf_fits_name = 'psf_small_stacked_original_flux_norm.fits'
-        shutil.copyfile(f'./{psf_fits_name}',f'{psf_fits_path}')
+    ###------------------INITIAL CONDITIONS------------------###
+    ############################################################
 
     # GALFIT REQUIREMENTS
     # initial parameters for galfit
@@ -359,13 +388,13 @@ if __name__ == '__main__':
 
     #initial_param_file_name = f'txt_{galaxy_name}_{version}_initial_params.txt'
     initial_param_file_name = f'txt_{galaxy_name}_initial_params.txt'
-    initial_param_file_path = f'{folder_new_version_path}/{initial_param_file_name}'
+    initial_param_file_path = f'{analysis_folder_path}/{initial_param_file_name}'
     initial_param_file = open(f'{initial_param_file_path}','w+')
-
+    
     # calling the function to create the constraints file
     create_initiaL_params(file=initial_param_file,
             galaxy = galaxy_name,
-            version = version,
+            version = analysis_version,
             eff_rad = initial_effective_radius,
             ser_ind = initial_sersic_index,
             ax_rat = initial_axis_ratio,
@@ -375,12 +404,15 @@ if __name__ == '__main__':
     initial_param_file.close()
 
 
+    ###------------------CONSTRAINTS------------------###
+    #####################################################
+
     # constraints for galfit
     n_range,re_range,mag_range,xy_range,q_range,pa_range = constraints_values()
 
     #constraints_file_name = f'txt_{galaxy_name}_{version}_constraints.txt'
     constraints_file_name = f'txt_{galaxy_name}_constraints.txt'
-    constraints_file_path = f'{folder_new_version_path}/{constraints_file_name}'
+    constraints_file_path = f'{analysis_folder_path}/{constraints_file_name}'
     constraints_file = open(f'{constraints_file_path}','w+')
     
 
@@ -396,40 +428,43 @@ if __name__ == '__main__':
     # closing the constraints file
     constraints_file.close()
 
-    # OTHER UTILITIES
+    ###------------------CSV FOLDER------------------###
+    ####################################################    
     
-    # Folder for the .csv files
-    csv_folder_path = f'{cwd}/{datacube_name_general}_csv'
-    create_folder(csv_folder_path,overwrite=True)
+    # CSV folder name
+    csv_folder_name = f'{analysis_folder_name}_csv'
 
-    if '--version_control' in sys.argv:
+    # Create a folder to store the csv files
+    # in the new version directory
+    csv_folder_path = f'{analysis_folder_path}/{csv_folder_name}'
+    create_folder(csv_folder_path,overwrite=False)
 
-        # Create a folder to store the csv files
-        csv_folder = f'{galaxy_name}_{version}_csv'
-        csv_folder_path = f'{folder_new_version_path}/{csv_folder}'
-        if os.path.isdir(f'{csv_folder_path}') == True:
-            
-            shutil.rmtree(f'{csv_folder_path}')
-
-        os.mkdir(f'{csv_folder_path}')
-
-    # Default version
-    if len(sys.argv) == 1:
-
-        # By default the running version is the 
-        # medfilt_inout
-        sys.argv.append('medfilt_inout')
+    ################################################################
+    ###------------------ANALYSYS CODE FUNCTION------------------###
+    ################################################################
     
-    main()
+    print(f'Analysing {galaxy_name} with {analysis_programme} '
+          f'in the version {next_version}')
+    
+    analisys()
 
     print('The anlysis has finished\n')
+    
+    ##########################################################
+    ###------------------PLOTTING RESULTS------------------###
+    ##########################################################
+    
+    subprocess.run(['python3', 'py_plot_galfit_all_NV.py'])
+    
+    ###------------------TIME INFORMATION------------------###
+    ##########################################################
 
     # Computing the required time
     end_time = time.time()
     total_time = end_time - start_time
-    print(f'The Galfit computing time was {(total_time/3600):1.2f} hours\n')    
+    print(f'\nThe Galfit computing time was {(total_time/3600):1.2f} hours\n')    
 
-    time_file = open(f'{folder_new_version_path}/txt_{galaxy_name}_total_time.txt','w+')
+    time_file = open(f'{analysis_folder_path}/txt_{galaxy_name}_total_time.txt','w+')
     time_file.write(f'{total_time:.2f} # seconds\n')
     time_file.write(f'{(total_time/60):.2f} # minutes\n')
     time_file.write(f'{(total_time/3600):.2f} # hours\n')

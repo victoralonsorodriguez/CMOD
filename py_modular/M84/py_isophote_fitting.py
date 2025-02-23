@@ -12,14 +12,13 @@ from photutils.isophote import Ellipse
 from py_open_fits import open_fits
 from py_plot_profiles import plot_profiles
 from py_plot_images import plot_images
-from py_mag_counts_convert import fits_mag_to_counts, fits_counts_to_mag, values_counts_to_mag
 
 
 def isophote_fitting(img_gal_path,
                      gal_center,
                      img_mask_path=None,
                      cons=None,
-                     galaxy_folder_path='.'):
+                     output_path='.'):
     
     print('Performing the isophote fitting\n')
     
@@ -40,7 +39,8 @@ def isophote_fitting(img_gal_path,
         gal_img_fit = img_gal_mask
     
     fig_name = f'{gal_img_name}_image_analyze'
-    plot_images(gal_img_fit,fig_name,cons=cons,counts=True,log_scale=True)
+    plot_images(gal_img_fit,fig_name,cons=cons,counts=True,log_scale=True,
+                output_path=output_path)
     
     
     # While loop beacuse we don't want to fix ellipse initial conditions
@@ -97,23 +97,26 @@ def isophote_fitting(img_gal_path,
                 
     # Export it as a csv
     isophote_table_name = f'{gal_img_name}_isophote.csv'
-    isophote_table_path = f'{galaxy_folder_path}/{isophote_table_name}'
+    isophote_table_path = f'{output_path}/{isophote_table_name}'
     isophote_table.write(f'{isophote_table_path}', format='csv', overwrite=True)
     
     # Creating some figures    
     if 'model' not in gal_img_name:
         plot_list = [(isophote_table_path,'Data')]
         plot_profiles(csv_path_list = plot_list,
-                      fig_name = f'{gal_img_name}',cons=cons)
+                      fig_name = f'{gal_img_name}',cons=cons,
+                      output_path=output_path)
         
     else:
         plot_list = [(isophote_table_path,'Model')]
         plot_profiles(csv_path_list = plot_list,
                       fig_name = 'i_model',
-                      cons=cons)
+                      cons=cons,
+                      output_path=output_path)
     
     
     fig_name = f'{gal_img_name}_ellipses'
-    plot_images(gal_img,fig_name,cons=cons,ellip=True,isolist=isolist,log_scale=True)
+    plot_images(gal_img,fig_name,cons=cons,ellip=True,isolist=isolist,log_scale=True,
+                output_path=output_path)
     
     return isophote_table_path

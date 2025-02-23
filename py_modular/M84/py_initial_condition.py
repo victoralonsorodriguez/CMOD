@@ -8,7 +8,7 @@ from scipy.integrate import simps
 
 from py_round_number import round_number
 from py_plot_initial_condition import plot_initial_conditions
-from py_plot_general import plot_gen
+from py_plot_general_sub import plot_gen
 
 def sersic_profile(r, n, R_e, I_e):
 
@@ -51,7 +51,7 @@ def calculate_chi_squared(x, y_obs, y_err, model, params):
     return chi_squared
 
 
-def initial_conditions(img_name,df, x_col, y_col,y_err_col,const):
+def initial_conditions(img_name,df, x_col, y_col,y_err_col,const,output_path):
     
     print('Computing the initial conditions')
     
@@ -111,14 +111,16 @@ def initial_conditions(img_name,df, x_col, y_col,y_err_col,const):
              y_data=y_data_fig,
              label_list=label_list,
              fig_name=fig_name,
+             fig_save_path=output_path,
              line_color = ['gold','dodgerblue','black'],
-             x_axis_label = r'$X\ dimension\ [\mathrm{pix}]$',
+             x_axis_label = ['$X\\, dimension\\, [\\mathrm{{pix}}]$'],
              x_ticks_dec = 0,
-             y_axis_label = r'$\ln(Intensity/\mathrm{counts})$',
+             y_axis_label = ['$\\ln(Intensity/\\mathrm{{counts}})$'],
              y_ticks_dec = 2,
              width_style = [0.75,2,2],
              zorder = [1,2,2],
-             style_plot = ['sct','line','line'])
+             style_plot = ['sct','line','line'],
+             plot_show= False)
     
     
     # SECOND STEP: disk fitting
@@ -189,7 +191,6 @@ def initial_conditions(img_name,df, x_col, y_col,y_err_col,const):
     
     # Crear los ajustes
     y_fit_bul = sersic_profile(x_data_bul, n_bul, r_e_bul, I_e_bul)
-    #y_fit_bul = sersic_profile_log(x_data_bul, n_bul, r_e_bul, a)
     
     # Ploting the fitting
     
@@ -197,7 +198,7 @@ def initial_conditions(img_name,df, x_col, y_col,y_err_col,const):
     y_fit_disk = np.array([np.nan] * (len(x_data_two) - len(y_fit_disk)) + list(y_fit_disk))
     
     x_data_fig = [x_data,x_data,x_data]
-    y_data_fig = [y_data,y_fit_disk,y_fit_bul]
+    y_data_fig = [y_data,y_fit_bul,y_fit_disk]
     
     label_list = ['Intensity Profile','Sersic Fitting - Bulge-like', 'Exponential Fitting - Disk-like']
     fig_name = f'{img_name}_IC_01'    
@@ -206,14 +207,16 @@ def initial_conditions(img_name,df, x_col, y_col,y_err_col,const):
              y_data=y_data_fig,
              label_list=label_list,
              fig_name=fig_name,
+             fig_save_path=output_path,
              line_color = ['gold','dodgerblue','black'],
-             x_axis_label = r'$X\ dimension\ [\mathrm{pix}]$',
+             x_axis_label =['$X\\, dimension\\, [\\mathrm{{pix}}]$'],
              x_ticks_dec = 0,
-             y_axis_label = r'$Intensity\,[\mathrm{counts}]$',
+             y_axis_label = ['$Intensisty\\, [\mathrm{{counts}}]$'],
              y_ticks_dec = 2,
              width_style = [0.75,2,2],
              zorder = [1,2,2],
-             style_plot = ['sct','line','line'])
+             style_plot = ['sct','line','line'],
+             plot_show=False)
     
     return (break_pos, break_pos_bul, round_number(I_0_disk,3), round_number(h_disk,3), 
             round_number(n_bul,3), round_number(r_e_bul,3), round_number(I_e_bul,3))
