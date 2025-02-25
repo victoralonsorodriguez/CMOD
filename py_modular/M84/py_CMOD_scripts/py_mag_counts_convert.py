@@ -1,3 +1,5 @@
+
+
 import numpy as np
 
 from astropy.io import fits
@@ -5,28 +7,11 @@ from astropy.io import fits
 from py_open_fits import open_fits
 from py_round_number import round_number
 
-
-###------------------ELLIPTICITY AND AXIS RATIO------------------###
-####################################################################
-
-def ell_to_axrat(ell):
-    axrat = 1 - ell
-    return round_number(axrat,3)
-
-def axrat_to_ell(axrat):
-    ell = 1 - axrat
-    return round_number(ell,3)
-
-
-###------------------MAGNITUDES AND COUNTS------------------###
-###############################################################
-
 def fits_mag_to_counts(data = None,
                        fits_input_path = None,
                        fits_output_path = '.',
                        const = (0.1,20),
-                       remove_padding = False,
-                       padding_value=np.nan):
+                       remove_padding = False):
     
     if data == None and fits_input_path != None:
         hdr_mag,data_mag,fits_mag_name = open_fits(fits_input_path)
@@ -41,7 +26,7 @@ def fits_mag_to_counts(data = None,
     # Deleting the padding 
     if remove_padding == True:
         padding = fits_flux_img == fits_flux_img[0,0]
-        fits_flux_img[padding] = padding_value
+        fits_flux_img[padding] = float('NaN')
     
     # Expoting the new fits
     if 'mag' in fits_mag_name:
@@ -60,8 +45,7 @@ def fits_counts_to_mag(data = None,
                        fits_input_path = None,
                        fits_output_path = '.',
                        const = (0.1,20),
-                       remove_padding = False,
-                       padding_value=np.nan):
+                       remove_padding = False):
     
     if data == None and fits_input_path != None:
         hdr_flux,data_flux,fits_flux_name = open_fits(fits_input_path)
@@ -77,7 +61,7 @@ def fits_counts_to_mag(data = None,
     # Deleting the padding 
     if remove_padding == True:
         padding = fits_mag_img == fits_mag_img[0,0]
-        fits_mag_img[padding] = padding_value
+        fits_mag_img[padding] = float('NaN')
     
     # Expoting the new fits in mag
     if 'counts' in fits_flux_name:
@@ -91,6 +75,8 @@ def fits_counts_to_mag(data = None,
     return fits_mag_path  
 
 
+
+# Changing values from counts to magnitudes
 def values_counts_to_mag(val_counts,const = (0.1,20)):
     
     if isinstance(val_counts, (list,np.ndarray)):
@@ -118,90 +104,11 @@ def values_counts_to_mag(val_counts,const = (0.1,20)):
         print(np.isnan(val_counts))
         print(type(val_counts))
         print('No valid value')
-
+        
+        
 
 def values_mag_to_counts(val_mag,const):
     
     val_count = 10**((val_mag - 2.5*np.log10(const[0]**2)-const[1])/-2.5)
     
     return round_number(val_count,3)
-
-
-###------------------PIXELS, ARCSEC AND PARSECS------------------###
-####################################################################
-
-# Changing from pixeles to kpc 
-def px_to_kpc(px,inst):
-
-    arcsec = px * inst 
-    kpc = arcsec_to_kpc(arcsec)
-
-    return round_number(kpc,3)
-
-def kpc_to_px(kpc,inst):
-    
-    arcsec = kpc_to_arcsec(kpc)
-    px = arcsec / inst 
-    
-    return round_number(px,3)
-
-def arcsec_to_kpc(arcsec):
-    
-    kpc = arcsec * 0.12
-    
-    return round_number(kpc,3)
-
-def kpc_to_arcsec(kpc):
-    
-    arcsec = kpc / (0.12)
-    
-    return round_number(arcsec,3)
-
-
-
-###------------------RADIANS AND DEGREES------------------###
-#############################################################
-
-# Changing from degrees to radian
-def deg_to_rad(deg):
-    
-    rad = (deg) * (np.pi / 180)
-
-    return round_number(rad,3)
-
-def rad_to_deg(rad):
-    
-    deg = (rad) * (180 / np.pi)
-        
-    return round_number(deg,3)
-
-
-def rad_to_deg_abs(rad):
-    
-    deg = ((rad) * (180 / np.pi)%360)
-        
-    return round_number(deg,3)
-
-
-###------------------REDSHIFT AND WAVELENGHT------------------###
-#################################################################
-
-# Transforming the redshift into wavelength
-def RtW(z,filter_wl):
-
-    wavelength = (filter_wl)/(1+z)
-    
-    np.seterr(divide = 'ignore') 
-    np.seterr(invalid = 'ignore')
-    
-    return round_number(wavelength,2)
-
-# Transforming the wavelength into redshift
-def WtR(wl,filter_wl):
-    
-    redshift = ((filter_wl)/wl) - 1 
-
-    np.seterr(divide = 'ignore') 
-    np.seterr(invalid = 'ignore')
-    
-    return round_number(redshift,2)
