@@ -1,5 +1,0 @@
-# M84 initial parameters introduced manually for 0
-Effective radius: 60 [pix]
-Sérsic Index: 3.0  
-Axis ratio: 0.81  
-Position angle: -52 [degrees, up=0, left=90]  
