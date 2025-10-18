@@ -23,3 +23,6 @@ TestResults.xml
 # .DS_Store files
 **/.DS_Store
 .DS_Store
+# Data results
+IC719
+M84
