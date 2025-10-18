@@ -1,0 +1,17 @@
+
+
+name: cmod_env
+
+dependencies: 
+- python>=3.10
+
+- numpy
+  - pandas
+  - scipy
+  - matplotlib
+  - astropy
+  - photutils
+
+- pip
+- pip:
+    - -e .

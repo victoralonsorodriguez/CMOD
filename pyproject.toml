@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cmod"
+version = "0.1.0"
+description = "Analysis pipeline for the CMOD effect based on Papaderos et al. (2023)."
+authors = [
+    { name = "Víctor Alonso Rodríguez", email = "victoralonsorodriguez61@gmail.com" }
+]
+requires-python = ">=3.10"
+
+dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "matplotlib",
+    "astropy",
+    "photutils"
+]
+
+[tool.setuptools]
+packages = ["cmod"]
+package_dir = {"" = "src"}
