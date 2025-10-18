@@ -1,0 +1,32 @@
+#-------ANALYSIS CONFIGURATION-------#
+
+ANALYSIS_PROGRAMME = 0          # Galfit = 0 (Default) or Imfit = 1
+ANALYSIS_MODE = 3               # original = 0, medfilt = 1, inout = 2, medinout = 3 (Default)
+ANALYSIS_RANGE = 0              # full range = 0 (Default) or frame analysed quantity = N (starting from beguining)
+PSF = 0                         # auto large = 0 (Default), auto small = 1 or specific = '/path/'
+INITIAL_CONDITIONS = 0          # auto = 0 (Default) or specific = '/path/'
+
+#-------VERSION CONTROL-------#
+
+VERSION_CONTINUATION = 0    # No = 0 or Yes = 1 (Default)
+VERSION_CONTROL = 1         # No = 0 or Yes = 1 (Default)
+
+#-------VALUES REQUIRED-------#
+
+PIXEL_SCALE = 0.2                   # Arcsec/pixel
+ZERO_CALIBRATION_CONSTANT = 25      # Intrument calibration constant
+CROP_FACTOR = 10                    # Galaxy center cropping factor
+
+#-------PLOT CONFIGURATION-------#
+
+PLOT_SYSTEM = ['Euclid','SDSS']                 # auto = 0 (Default), system list = ['','',...]
+PLOT_FILTER = ['HE','YE','V']            # auto = 0 (Default), filter list = ['','',...]
+PLOT_MAG = 0            # auto = 0 (Default), magntiude list in tuple pairs = [('Mag1','Mag2'),('Mag3','Mag4'),...]
+PLOT_MODE = 0           # filter = 0 or magnitude = 1 or both = 2 (Default)
+PLOT_SAVE_MODE = 0           # group = 0 (Default), individual = 1 or both = 2
+PLOT_MAX_COLUMNS = 10           # maximun number of columns for each filter plot = N (=8 Default)
+PLOT_ANALYSIS_VERSION = 5                # analysis version to plot = N or = latest (Default)
+
+#-------INITISL CONDITIONS-------#
+
+#-------CONSTRAINTS-------#
