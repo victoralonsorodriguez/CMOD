@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 import functools
 
-from py_open_fits import open_fits
+from cmod.io import open_fits
 from py_convert_functions import values_counts_to_mag,px_to_kpc,kpc_to_px
 
 

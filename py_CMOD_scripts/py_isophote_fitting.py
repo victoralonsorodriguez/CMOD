@@ -9,7 +9,7 @@ from photutils.aperture import EllipticalAperture
 from photutils.isophote import Ellipse
 
 
-from py_open_fits import open_fits
+from cmod.io import open_fits
 from py_plot_profiles import plot_profiles
 from py_plot_images import plot_images
 

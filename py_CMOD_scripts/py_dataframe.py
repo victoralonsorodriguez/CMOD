@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import re
 
-from py_open_fits import open_fits
+from cmod.io import open_fits
 from py_galfit_kpc_correction import kpc_correction
 
 from astropy.io import fits

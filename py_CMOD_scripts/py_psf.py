@@ -11,7 +11,7 @@ import pdb
 
 from py_psf_script import create_psf_script
 from py_config_argparse import argparse_values
-from py_open_fits import open_fits
+from cmod.io import open_fits
 
 
 '''
