@@ -1,52 +1,80 @@
-# CMOD - Chromatic Surface Brightness MODulation (still in development)
+# CMOD - Chromatic Surface Brightness MODulation Analysis Pipeline
 
-Ths repository contains the codes created to study the CMOD effect from a paractical point of view.
+[![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/victoralonsorodriguez/CMOD.svg)](https://github.com/victoralonsorodriguez/CMOD/tags)[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-The main branch contains the final files of every development branch correponding to each new version. 
+Analysis pipeline to study the CMOD effect in nearby galaxies, based on surface brightness profile decomposition using [Galfit](https://users.obs.carnegiescience.edu/peng/work/galfit/galfit.html)/[Imfit](https://www.mpe.mpg.de/~erwin/code/imfit/).
 
-For running the code it is necessary to execute the file sh_galfit_auto_global.sh inside py_scripts_external and it should be enought if all the packages are intalled.
+**Status:** Code refactored (v1.0.0). Ready for implementing new features (e.g., resampling).
 
-There are four modes of analysis:
+---
 
-    - 'original': it was the first mode developed. It is the less accurate
-    - 'medfilt': each image is comvolved with a median filter to reduce noise
-    - 'inout': the initial parameters for an image are the output parameters of previous image
-    - 'medfilt_inout': is the combination of the 'medfilt' and 'inout' versions. It is the most accurate
+## Installation
 
+1. **Clone the repository:**
 
-## Version change log
+```bash
+    git clone [https://github.com/victoralonsorodriguez/CMOD.git](https://github.com/victoralonsorodriguez/CMOD.git)
+    cd CMOD
+```
 
-### Version 3.0
+2. **Create the Conda environment:** Requires [Anaconda](https://www.anaconda.com/) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html).
 
-This version changes the way the analysis is carried out. Almost every file has been modified.
+```bash
+    conda env create -f environment.yml
+    conda activate cmod_env
+```
 
-The galaxies 
+This will install all Python dependencies and the `cmod` package in editable mode.
 
-### Version 2.06 - plots_versions_united branch
+3. **External Dependencies:** This pipeline requires **Galfit** and/or **Imfit** to be installed on your system and available in the system's `PATH`. Follow the installation instructions from their respective websites.
 
-This new version merge all plot codes into one script. This will allow to modify them in an easy way.
+---
 
-### Version 2.05 - psf_name branch
+## Usage
 
-With this new version the galaxy folder name sctructure has an important meaning. If 'psf' (lowercase) is included in the name then for Galfit analysis will be used a small point spread function (PSF). Otherwise a large PSF will be crerated and used for the analysis. Due this, from now on the galaxy folder name has just to include the galaxy name and the version as 'M84_V5' for example for a large PSF.
+The main pipeline is executed via the `scripts/run_cmod.py` script.
 
-### Version 2.04 - auto_versions_analysis branch
+```bash
+conda activate cmod_env
+python scripts/run_cmod.py [OPTIONS]
+```
 
-This version has a new automatic shell script. Instead of four different shell scripts, one for each analaysis mode, there are just one. 'sh_galfit_auto.sh'. To execute the modes it is neccessary to indicate them as an argument in the comment line. For example, to run the original mode it should be as './sh_galfit_auto.sh original'. If no argument is given, the default mode is the 'medfilt_version' since is the most accurate mode. 
+## Configuration
 
-### Version 2.03 - unite_version branch
+The pipeline's behavior (which galaxies to analyze, which program to use, initial parameters, etc.) is primarily controlled through a configuration file. Pass the path using the `-conf` flag:
 
-This version simplify the files required to execute the different versions of the code. With this version all the diferent modes of analysis are contained in the same file 'py_galfit_3D.py'. To execute the modes it is neccessary to indicate them as an argument in the comment line. For example, to run the original mode it should be as 'python3 py_galfit_3D.py original'. If no argument is given, the default mode is the 'medfilt_version' since is the most accurate mode. 
+```bash
+python scripts/run_cmod.py -conf config/your_config.txt
+```
 
-### Version 2.02 - plots_from_csv_folder branch
+(We need to define and document the format of this configuration file).
 
-Now the plots are created from the csv folder for each galaxy. New plots of the magnitude along with the Sérsic Index and Effective Radiud are created. Also the center position along with the Axis Ratio and the Position Angle.
+Specific parameters can be overridden via command-line flags. Run `python scripts/run_cmod.py --help` to see available options (to be implemented in `io.py`).
 
-### Version 2.01 - csv_files branch
+## Project Structure
 
-This version includes a new folder to store the csv files created during the galfit analysis. This folder is included inside the main galaxy directory names as 'galaxyname_csv'.
+* `src/cmod/`: Main source code for the Python package.
+    * `io.py`: Data and configuration reading/writing.
+    * `processing.py`: Image processing (PSF, isophotes, initial conditions).
+    * `fitting.py`: Script generation and execution for Galfit/Imfit.
+    * `photometry.py`: Photometric conversions.
+    * `cosmology.py`: Cosmological conversions (scales, z-lambda).
+    * `plotting.py`: Functions for generating plots.
+    * `resampling.py`: (Future) Functions for observation simulation.
+    * `pipeline.py`: Functions orchestrating the analysis pipeline.
+    * `utils.py`: Helper functions.
+* `scripts/`: Executable scripts.
+    * `run_cmod.py`: Main entry point.
+* `data/`: Input data (original FITS, PSFs). *(Note: Add to .gitignore if large)*.
+* `config/`: Example/template configuration files.
+* `notebooks/`: (Optional) Jupyter notebooks for exploration or visualization.
+* `legacy_scripts/`: Archived old scripts (.sh, .py).
 
-### Version 1.00
+---
 
-This version was presented as the final code for the BSc Thesis. It allows to analyse the galaxies with galfit and create some plots.
+## Contact
+
+* Name: Victor Alonso Rodriguez
+* email: victoralonsorodriguez61@gmail.com
+
 

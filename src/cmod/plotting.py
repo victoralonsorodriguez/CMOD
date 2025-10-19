@@ -1873,9 +1873,9 @@ def run_plotting_pipeline():
     # Obtaining the current working directory
     # in which the programme is executed
     SCRIPT_PATH = Path(__file__).resolve()
-    cwd_scripts = SCRIPT_PATH.parent # py_CMOD_scripts/
-    cwd_global = cwd_scripts.parent  # CMOD/
-    DATA_DIR = cwd_global / "data"   # Define data dir
+    cwd_scripts = SCRIPT_PATH.parent
+    cwd_src = cwd_scripts.parent
+    cwd_global = cwd_src.parent
     
     datacube_folder_name_list = []
     datacube_folder_path_list = []
@@ -1911,7 +1911,8 @@ def run_plotting_pipeline():
         datacube_name_general = '_'.join((datacube_name_list[0].split('.fits')[0]).split('_')[:-1])
         
         version_file_name = f'txt_{galaxy_name}_version.txt'
-        version_file_path = f'{cwd_global}/{galaxy_name}/{version_file_name}'
+        #version_file_path = f'{cwd_global}/{galaxy_name}/{version_file_name}'
+        version_file_path = f'{cwd_global}/data/{version_file_name}'
         
         # Obtaining the latest version runned
         if plot_analysis_version == 'latest':

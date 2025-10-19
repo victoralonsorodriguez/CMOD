@@ -52,7 +52,9 @@ def run_analysis_pipeline():
     # in which the programme is executed
     SCRIPT_PATH = Path(__file__).resolve()
     cwd_scripts = SCRIPT_PATH.parent
-    cwd_global = cwd_scripts.parent
+    cwd_src = cwd_scripts.parent
+    cwd_global = cwd_src.parent
+    
     
     datacube_folder_name_list = []
     datacube_folder_path_list = []
