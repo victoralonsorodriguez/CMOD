@@ -39,9 +39,8 @@ from py_config_argparse import argparse_values
 from py_version_control import version_directory, version_file, version_file_last
 from cmod.io import open_fits
 from cmod.photometry import fits_mag_to_counts, values_counts_to_mag
-from cmod.processing import max_center_value
+from cmod.processing import max_center_value, isophote_fitting
 from cmod.results import galfit_init_dataframe, galfit_create_dataframe,imfit_init_dataframe,imfit_create_dataframe
-from py_isophote_fitting import isophote_fitting
 from cmod.utils import Cronometro, round_number, create_folder, rad_to_deg_abs
 from py_psf import create_psf
 
