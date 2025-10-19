@@ -8,7 +8,8 @@ from matplotlib.ticker import FormatStrFormatter
 import functools
 
 from cmod.io import open_fits
-from py_convert_functions import values_counts_to_mag,px_to_kpc,kpc_to_px
+from cmod.photometry import values_counts_to_mag
+from py_convert_functions import px_to_kpc,kpc_to_px
 
 
 def plot_images(gal_img,

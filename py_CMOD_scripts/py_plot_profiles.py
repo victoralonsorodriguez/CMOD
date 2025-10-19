@@ -10,8 +10,8 @@ from astropy.cosmology import FlatLambdaCDM
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 
-from py_convert_functions import (values_counts_to_mag,values_mag_to_counts,
-                                  rad_to_deg,deg_to_rad,
+from cmod.photometry import values_counts_to_mag,values_mag_to_counts
+from py_convert_functions import (rad_to_deg,deg_to_rad,
                                   px_to_kpc,kpc_to_px,
                                   ell_to_axrat,axrat_to_ell)
 
