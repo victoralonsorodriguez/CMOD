@@ -4,7 +4,7 @@ import sys
 
 from scipy.optimize import curve_fit
 
-from py_round_number import round_number
+from cmod.utils import round_number
 from py_plot_general import plot_gen
 
 def sersic_profile(r, n, R_e, I_e):

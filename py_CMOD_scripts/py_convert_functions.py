@@ -3,7 +3,7 @@ import numpy as np
 from astropy.io import fits
 
 from py_open_fits import open_fits
-from py_round_number import round_number
+from cmod.utils import round_number
 
 
 ###------------------ELLIPTICITY AND AXIS RATIO------------------###

@@ -9,7 +9,7 @@ from py_galfit_kpc_correction import kpc_correction
 from astropy.io import fits
 from astropy.cosmology import FlatLambdaCDM
 
-from py_round_number import round_number
+from cmod.utils import round_number
 
 def galfit_init_dataframe():
     

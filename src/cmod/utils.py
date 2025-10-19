@@ -1,5 +1,5 @@
 import numpy as np
-
+import os
 import threading
 import shutil
 import atexit
@@ -57,7 +57,25 @@ class Cronometro:
         minutos = int((segundos % 3600) // 60)
         segundos = int(segundos % 60)
         return f"{horas:02}:{minutos:02}:{segundos:02}"
+
+def create_folder(folder_path,
+                  overwrite = False):
     
+    # Check if the folder already exists
+    if os.path.isdir(folder_path) == True:
+        
+        # If overwrite is selected
+        if overwrite == True:
+            shutil.rmtree(folder_path)
+            os.mkdir(folder_path)
+
+        # If not, pass
+        else:
+            pass
+    
+    # If the folder is not already created
+    else:
+        os.mkdir(folder_path)
 
 def round_number(num,dec):
     

@@ -35,7 +35,6 @@ from py_imfit_script import create_conf_imfit
 
 
 from py_open_fits import open_fits
-from py_create_folder import create_folder
 from py_convert_functions import fits_mag_to_counts, values_counts_to_mag, rad_to_deg_abs
 from py_max_center_value import max_center_value
 from py_dataframe import galfit_init_dataframe, galfit_create_dataframe,imfit_init_dataframe,imfit_create_dataframe
@@ -43,7 +42,7 @@ from py_isophote_fitting import isophote_fitting
 from py_initial_condition import initial_conditions
 from py_config_argparse import argparse_values
 from py_version_control import version_directory, version_file, version_file_last
-from cmod.utils import Cronometro, round_number
+from cmod.utils import Cronometro, round_number, create_folder
 from py_psf import create_psf
 
 
@@ -426,7 +425,7 @@ if __name__ == '__main__':
     #############################################################
     
     cronometro = Cronometro()
-    #cronometro.iniciar()
+    cronometro.iniciar()
     
     # Computing the total analysis time
     start_time = time.time()

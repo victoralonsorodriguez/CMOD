@@ -1,6 +1,6 @@
 
 import numpy as np
-from py_round_number import round_number
+from cmod.utils import round_number
 
 def max_center_value(data,
                      crop_factor=10):
