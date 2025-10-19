@@ -26,15 +26,15 @@ import time
 import warnings
 warnings.filterwarnings('ignore')
 
-from py_galfit_initial_params import initial_params
-from py_galfit_initial_params_script import create_initiaL_params
 
 from py_initial_condition import initial_conditions
 from py_config_argparse import argparse_values
 from py_version_control import version_directory, version_file, version_file_last
 from py_psf import create_psf
 
-from cmod.fitting import constraints_values, create_constraints, create_script, create_conf_imfit
+from cmod.fitting import (constraints_values, create_constraints, 
+                          create_script, create_conf_imfit,
+                          initial_params, create_initiaL_params)
 from cmod.io import open_fits
 from cmod.photometry import fits_mag_to_counts, values_counts_to_mag
 from cmod.processing import max_center_value, isophote_fitting
