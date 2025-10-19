@@ -10,8 +10,7 @@ from photutils.isophote import Ellipse
 
 
 from cmod.io import open_fits
-from py_plot_profiles import plot_profiles
-from py_plot_images import plot_images
+from cmod.plotting import plot_images, plot_profiles
 
 
 def isophote_fitting(img_gal_path,
