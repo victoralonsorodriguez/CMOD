@@ -28,14 +28,13 @@ warnings.filterwarnings('ignore')
 
 
 from py_version_control import version_directory, version_file, version_file_last
-from py_psf import create_psf
 
 from cmod.fitting import (constraints_values, create_constraints, 
                           create_script, create_conf_imfit,
                           initial_params, create_initiaL_params)
 from cmod.io import open_fits, argparse_values
 from cmod.photometry import fits_mag_to_counts, values_counts_to_mag
-from cmod.processing import max_center_value, isophote_fitting, initial_conditions
+from cmod.processing import max_center_value, isophote_fitting, initial_conditions, create_psf
 from cmod.results import galfit_init_dataframe, galfit_create_dataframe,imfit_init_dataframe,imfit_create_dataframe
 from cmod.utils import Cronometro, round_number, create_folder, rad_to_deg_abs
 
