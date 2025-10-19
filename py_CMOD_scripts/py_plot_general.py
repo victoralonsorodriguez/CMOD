@@ -19,7 +19,7 @@ import matplotlib.font_manager as font_manager
 import functools
 
 
-from py_convert_functions import RtW, WtR
+from cmod.cosmology import RtW, WtR
 
 
 # Enable LaTeX rendering
