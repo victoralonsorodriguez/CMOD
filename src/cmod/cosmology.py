@@ -65,10 +65,10 @@ def WtR(wl,filter_wl):
 def kpc_correction(galaxy):
 
     # Dictionary to store the z=0 kpc/'' factor correction
-    scale_dict = {'ESO498G05':0.192,
-                    'IC719':0.127, # z = 0.006114
+    zlocal_dict = {'ESO498G05':0.192,
+                    'IC719':0.006114, # z = 0.006114
                     'IC2051':0.125, 
-                    'M84':0.071, # z = 0.003392
+                    'M84':0.003392, # z = 0.003392
                     'NGC0289':0.096,
                     'NGC307':0.250,
                     'NGC788':0.266,
@@ -82,7 +82,7 @@ def kpc_correction(galaxy):
                     'NGC6958':0.176
                     }
                     
-    return scale_dict[galaxy]
+    return zlocal_dict[galaxy]
 
 
 def cosmological_scale(z):

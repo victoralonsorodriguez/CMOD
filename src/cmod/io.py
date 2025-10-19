@@ -4,6 +4,7 @@ import sys
 import argparse
 import re
 import ast
+import pdb
 
 
 from astropy.io import fits
@@ -35,7 +36,7 @@ def open_fits(fits_path,
     
     # Open the fits with Astropy and sxtracting the header and 
     # the data from it
-    hdu = fits.open(f'{fits_path}')
+    hdu = fits.open(fits_path)
     hdr = hdu[dim].header
     img = hdu[dim].data
     

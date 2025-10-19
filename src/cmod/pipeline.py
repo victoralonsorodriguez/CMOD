@@ -26,6 +26,7 @@ from .fitting import (constraints_values, create_constraints,
 from .io import open_fits, argparse_values
 from .photometry import fits_mag_to_counts, values_counts_to_mag
 from .processing import max_center_value, isophote_fitting, initial_conditions, create_psf
+from .resampling import resampling_frame_pixels,resampling_frame
 from .results import galfit_init_dataframe, galfit_create_dataframe,imfit_init_dataframe,imfit_create_dataframe
 from .utils import (Cronometro, round_number, create_folder, rad_to_deg_abs,
                         version_directory, version_file, version_file_last)
@@ -377,6 +378,19 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
 
                 # saving the subframe
                 fits.writeto(f'{frame_path}', frame, header=datacube_flux_hdr, overwrite=True)
+                
+                # Resampling the frame
+                frame_resampled_pixels = resampling_frame_pixels(galaxy=galaxy_name,
+                                                                             original_sensor_pixscale=pixel_scale,
+                                                                             original_sensor_pix_num=300,
+                                                                             zsim=redshift_value,
+                                                                             simulated_sensor_pxscale=0.031)
+                
+                frame_path = resampling_frame(frame_path=frame_path,
+                                                        resample_frame_pixels=frame_resampled_pixels)
+                
+                hdr,frame,frame_name = open_fits(frame_path)
+                frame_name_noext = frame_name
 
                 
                 # Obtaining the center of the galaxy as the maximun central pixel value
@@ -390,13 +404,14 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                             gal_iso_fit_csv_path = isophote_fitting(frame_path,max_pix_value_center_pos,cons=pxsc_zcal_const,output_path=analysis_folder_path)
                             #gal_iso_fit_csv_path = f'{analysis_folder_path}/m84_VBIN018_SL_zSimJ_EucHab_z0.00_counts_isophote.csv'
                             gal_iso_fit_df = pd.read_csv(gal_iso_fit_csv_path)
-                            break_pos, break_pos_bul, I_0_disk_in, h_disk_in, n_bul_in, r_e_bul_in, I_e_bul_in = initial_conditions(frame_name_noext,
-                                                                                                                                    gal_iso_fit_df, 
-                                                                                                                                    'sma', 
-                                                                                                                                    'intens', 
-                                                                                                                                    'intens_err',
-                                                                                                                                    const=pxsc_zcal_const,
-                                                                                                                                    output_path=analysis_folder_path)
+                            (break_pos, break_pos_bul, I_0_disk_in, 
+                             h_disk_in, n_bul_in, r_e_bul_in, I_e_bul_in) = initial_conditions(frame_name_noext,
+                                                                                                gal_iso_fit_df, 
+                                                                                                'sma', 
+                                                                                                'intens', 
+                                                                                                'intens_err',
+                                                                                                const=pxsc_zcal_const,
+                                                                                                output_path=analysis_folder_path)
                                 
                             # Computing the mean values from the external partes of the galaxy
                             ell_mean_in = round_number(gal_iso_fit_df.loc[break_pos:, 'ellipticity'].mean(),3)
