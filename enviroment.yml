@@ -1,0 +1,21 @@
+
+
+name: cmod_env
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies: 
+- python>=3.10
+
+- numpy
+- pandas
+- scipy
+- matplotlib
+- astropy
+- photutils
+
+- pip
+- pip:
+    - -e .

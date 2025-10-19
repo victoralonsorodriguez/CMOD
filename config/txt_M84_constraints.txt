@@ -1,0 +1,9 @@
+# Component   parameter   constraint  (Optional and written with #)Commentary
+# operation values 
+1 n 0.6 to 6 #polis email correction 
+1 re 1 to 2000  
+1 mag -1.0 1.0  
+1 x -1.0 1.0  
+1 y -1.0 1.0  
+1 q 0 to 1 
+1 pa -90.0 to 90.0

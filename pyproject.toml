@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cmod"
+description = "Analysis pipeline for the CMOD effect based on Papaderos et al. (2023)."
+version = "0.1.0"
+authors = [
+    {name = "Víctor Alonso Rodríguez", email = "victoralonsorodriguez61@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "matplotlib",
+    "astropy",
+    "photutils"
+]
+keywords = ["cmod",
+            "galaxy",
+            "redshift",
+            "morphological"]
+
+[project.urls]
+repository = "https://github.com/victoralonsorodriguez/CMOD"
+issues = "https://github.com/victoralonsorodriguez/CMOD/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
