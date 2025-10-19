@@ -6,9 +6,9 @@ import re
 from astropy.io import fits
 from astropy.cosmology import FlatLambdaCDM
 
-from cmod.cosmology import kpc_correction
-from cmod.io import open_fits
-from cmod.utils import round_number
+from .cosmology import kpc_correction
+from .io import open_fits
+from .utils import round_number
 
 
 

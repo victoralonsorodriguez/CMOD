@@ -1,5 +1,5 @@
 import numpy as np
-from cmod.utils import round_number
+from .utils import round_number
 
 
 ###------------------PIXELS, ARCSEC AND PARSECS------------------###

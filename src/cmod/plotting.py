@@ -13,10 +13,10 @@ import matplotlib.font_manager as font_manager
 
 from astropy.cosmology import FlatLambdaCDM
 
-from cmod.cosmology import px_to_kpc,kpc_to_px, RtW, WtR
-from cmod.io import open_fits
-from cmod.photometry import values_counts_to_mag, values_mag_to_counts
-from cmod.utils import rad_to_deg, deg_to_rad, ell_to_axrat,axrat_to_ell
+from .cosmology import px_to_kpc,kpc_to_px, RtW, WtR
+from .io import open_fits
+from .photometry import values_counts_to_mag, values_mag_to_counts
+from .utils import rad_to_deg, deg_to_rad, ell_to_axrat,axrat_to_ell
 
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)

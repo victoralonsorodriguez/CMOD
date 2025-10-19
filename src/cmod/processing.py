@@ -5,9 +5,9 @@ from photutils.isophote import EllipseGeometry
 from photutils.aperture import EllipticalAperture
 from photutils.isophote import Ellipse
 
-from cmod.io import open_fits
-from cmod.plotting import plot_images, plot_profiles
-from cmod.utils import round_number
+from .io import open_fits
+from .plotting import plot_images, plot_profiles
+from .utils import round_number
 
 
 def isophote_fitting(img_gal_path,
