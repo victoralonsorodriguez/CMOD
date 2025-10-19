@@ -11,9 +11,9 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 
 from cmod.photometry import values_counts_to_mag,values_mag_to_counts
-from py_convert_functions import (rad_to_deg,deg_to_rad,
-                                  px_to_kpc,kpc_to_px,
-                                  ell_to_axrat,axrat_to_ell)
+from cmod.utils import rad_to_deg, deg_to_rad, ell_to_axrat,axrat_to_ell
+from py_convert_functions import px_to_kpc,kpc_to_px
+                                  
 
 
 

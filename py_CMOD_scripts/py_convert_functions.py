@@ -2,18 +2,6 @@ import numpy as np
 from cmod.utils import round_number
 
 
-###------------------ELLIPTICITY AND AXIS RATIO------------------###
-####################################################################
-
-def ell_to_axrat(ell):
-    axrat = 1 - ell
-    return round_number(axrat,3)
-
-def axrat_to_ell(axrat):
-    ell = 1 - axrat
-    return round_number(ell,3)
-
-
 ###------------------PIXELS, ARCSEC AND PARSECS------------------###
 ####################################################################
 
@@ -43,31 +31,6 @@ def kpc_to_arcsec(kpc):
     arcsec = kpc / (0.12)
     
     return round_number(arcsec,3)
-
-
-
-###------------------RADIANS AND DEGREES------------------###
-#############################################################
-
-# Changing from degrees to radian
-def deg_to_rad(deg):
-    
-    rad = (deg) * (np.pi / 180)
-
-    return round_number(rad,3)
-
-def rad_to_deg(rad):
-    
-    deg = (rad) * (180 / np.pi)
-        
-    return round_number(deg,3)
-
-
-def rad_to_deg_abs(rad):
-    
-    deg = ((rad) * (180 / np.pi)%360)
-        
-    return round_number(deg,3)
 
 
 ###------------------REDSHIFT AND WAVELENGHT------------------###
