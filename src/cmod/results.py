@@ -6,7 +6,7 @@ import re
 from astropy.io import fits
 from astropy.cosmology import FlatLambdaCDM
 
-from .cosmology import kpc_correction
+from .cosmology import kpc_correction, cosmological_scale
 from .io import open_fits
 from .utils import round_number
 
@@ -74,8 +74,7 @@ def galfit_create_dataframe(df,galaxy_name,output_file_path,pxsc_zcal_const):
     
     # Effective radius in kpc
     #moving distances from kpc to arcsec
-    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-    kpc_per_arcsec = 1./cosmo.arcsec_per_kpc_proper(z)
+    kpc_per_arcsec = cosmological_scale(z)
     
     # Extract the unit to create a Quantity inside the if
     kpc_unit = kpc_per_arcsec.unit
