@@ -3,14 +3,16 @@ import pandas as pd
 import numpy as np
 import re
 
-from cmod.cosmology import kpc_correction
-from cmod.io import open_fits
-
-
 from astropy.io import fits
 from astropy.cosmology import FlatLambdaCDM
 
+from cmod.cosmology import kpc_correction
+from cmod.io import open_fits
 from cmod.utils import round_number
+
+
+
+
 
 def galfit_init_dataframe():
     
