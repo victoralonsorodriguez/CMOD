@@ -6,7 +6,7 @@ import shutil
 import numpy as np
 from datetime import datetime
 
-from py_create_folder import create_folder
+from cmod.utils import create_folder
 
 def version_directory(cwd,base_name,original_dir='.',create_dir=False):
 
