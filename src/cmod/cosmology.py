@@ -62,7 +62,7 @@ def WtR(wl,filter_wl):
 
 
 # This scripts avoids the 0 kpc galaxy radius at z=0
-def kpc_correction(galaxy):
+def zlocal_correction(galaxy):
 
     # Dictionary to store the z=0 kpc/'' factor correction
     zlocal_dict = {'ESO498G05':0.192,

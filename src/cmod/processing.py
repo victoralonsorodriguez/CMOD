@@ -20,6 +20,7 @@ from .utils import round_number
 
 def isophote_fitting(img_gal_path,
                      gal_center,
+                     gal_size,
                      img_mask_path=None,
                      cons=None,
                      output_path='.'):
@@ -56,13 +57,11 @@ def isophote_fitting(img_gal_path,
     pa_steps = (pa_fin - pa_ini + 1)
     pa_range = np.linspace(pa_ini,pa_fin,pa_steps)
     
-    
     gal_img_fit[np.isnan(gal_img_fit)] = 0
 
-    iso_fitted = False
+    sma = max(gal_size) * 0.7
 
     # Image should be in counts
-    #while iso_fitted == False:
     while len(isophote_table) == 0:
 
         

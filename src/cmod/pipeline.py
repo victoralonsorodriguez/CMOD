@@ -352,8 +352,8 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
         try:
         
             # Analysing each frame individually
-            #for frame_pos in range(frame_range):
-            for frame_pos in range(1):
+            for frame_pos in range(frame_range):
+            #for frame_pos in range(1):
                 
                 # Obtaining the corresponding redshift of each frame
                 redshift_value = round_number(frame_pos * redshift_step,2)
@@ -379,19 +379,23 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                 # saving the subframe
                 fits.writeto(f'{frame_path}', frame, header=datacube_flux_hdr, overwrite=True)
                 
+                # Obtaining the frame shape
+                frame_shape = frame.shape
+                
                 # Resampling the frame
-                frame_resampled_pixels = resampling_frame_pixels(galaxy=galaxy_name,
-                                                                             original_sensor_pixscale=pixel_scale,
-                                                                             original_sensor_pix_num=300,
-                                                                             zsim=redshift_value,
-                                                                             simulated_sensor_pxscale=0.031)
+                frame_resampled_size = resampling_frame_pixels(galaxy=galaxy_name,
+                                                               galaxy_shape = frame_shape,
+                                                               original_sensor_pixscale=pixel_scale,
+                                                               zsim=redshift_value,
+                                                               simulated_sensor_pxscale=0.031)
                 
                 frame_path = resampling_frame(frame_path=frame_path,
-                                                        resample_frame_pixels=frame_resampled_pixels)
+                                              resample_frame_size=frame_resampled_size)
                 
                 hdr,frame,frame_name = open_fits(frame_path)
                 frame_name_noext = frame_name
 
+                frame_shape = frame_resampled_size
                 
                 # Obtaining the center of the galaxy as the maximun central pixel value
                 # Only for the first image
@@ -401,8 +405,11 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                     
                     try:
                         if initial_conditions_mode == 0:
-                            gal_iso_fit_csv_path = isophote_fitting(frame_path,max_pix_value_center_pos,cons=pxsc_zcal_const,output_path=analysis_folder_path)
-                            #gal_iso_fit_csv_path = f'{analysis_folder_path}/m84_VBIN018_SL_zSimJ_EucHab_z0.00_counts_isophote.csv'
+                            gal_iso_fit_csv_path = isophote_fitting(frame_path,
+                                                                    max_pix_value_center_pos,
+                                                                    frame_shape,
+                                                                    cons=pxsc_zcal_const,
+                                                                    output_path=analysis_folder_path)
                             gal_iso_fit_df = pd.read_csv(gal_iso_fit_csv_path)
                             (break_pos, break_pos_bul, I_0_disk_in, 
                              h_disk_in, n_bul_in, r_e_bul_in, I_e_bul_in) = initial_conditions(frame_name_noext,
@@ -422,9 +429,7 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                     except Exception as e:
                         print(f'Following error obtaining initial conditions'
                             f'\n{e}')
-                
-                # Obtaining the frame shape
-                frame_shape = frame.shape
+
                 
                 # Obtaining them toal surface magnitude of the frame
                 frame_total_flux = np.nansum(frame)
@@ -461,8 +466,10 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                                         output_file_name = output_file_name,
                                         file_shape = frame_shape,
                                         zp_const = zcal_const,
-                                        pix_scl = pixel_scale,
-                                        img_center = (y_center,x_center),
+                                        #pix_scl = pixel_scale,
+                                        pix_scl = 0.031,
+                                        img_center = max_pix_value_center_pos,
+                                        #img_center = (y_center,x_center),
                                         int_mag = mag,
                                         eff_rad = eff_rad,
                                         ser_ind = ser_index,
@@ -500,7 +507,8 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                                         output_file_name = output_file_name,
                                         file_shape = frame_shape,
                                         zp_const = zcal_const,
-                                        pix_scl = pixel_scale,
+                                        #pix_scl = pixel_scale,
+                                        pix_scl = 0.031,
                                         img_center = max_pix_value_center_pos,
                                         int_mag = frame_total_mag,
                                         eff_rad = r_e_bul_in,

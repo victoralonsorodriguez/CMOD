@@ -6,7 +6,7 @@ import re
 from astropy.io import fits
 from astropy.cosmology import FlatLambdaCDM
 
-from .cosmology import kpc_correction, cosmological_scale
+from .cosmology import zlocal_correction, cosmological_scale
 from .io import open_fits
 from .utils import round_number
 
@@ -27,7 +27,7 @@ def galfit_init_dataframe():
                                  'Eff_rad_err',
                                  'Eff_rad_arcsec',
                                  'Eff_rad_arcsec_err',
-                                 'kpc_per_arcsec',
+                                 'zscale',
                                  'Eff_rad_kpc',
                                  'Eff_rad_kpc_err',
                                  'Ind','Ind_err',
@@ -42,7 +42,9 @@ def galfit_init_dataframe():
     
 def galfit_create_dataframe(df,galaxy_name,output_file_path,pxsc_zcal_const):
     
-    hdr,img,frame_output_name = open_fits(output_file_path,dim=2)
+    print('Creating a dataframe to store results')
+    
+    hdr,img,frame_output_name = open_fits(output_file_path)
     
     # find the redshif in the ouput file name
     z = re.findall('z\d.\d\d',output_file_path)[0][1:]
@@ -74,21 +76,17 @@ def galfit_create_dataframe(df,galaxy_name,output_file_path,pxsc_zcal_const):
     
     # Effective radius in kpc
     #moving distances from kpc to arcsec
-    kpc_per_arcsec = cosmological_scale(z)
     
-    # Extract the unit to create a Quantity inside the if
-    kpc_unit = kpc_per_arcsec.unit
-
-    #eff_rad_kpc = eff_rad_arcsec * kpc_per_arcsec.value    
-    #eff_rad_kpc_err = eff_rad_arcsec_err * kpc_per_arcsec.value
-    
-    #if z == '0.00':
+    if z != 0.0:
+        zscale = cosmological_scale(z)
+    else:
+        zlocal = zlocal_correction(galaxy_name)
+        zscale = cosmological_scale(zlocal)
         
-    # Obtaining a Quantity
-    kpc_per_arcsec = kpc_correction(galaxy_name)*kpc_unit
     
-    eff_rad_kpc = round_number(eff_rad_arcsec * kpc_per_arcsec.value,3)
-    eff_rad_kpc_err = round_number(eff_rad_arcsec_err * kpc_per_arcsec.value,3)
+    
+    eff_rad_kpc = round_number(eff_rad_arcsec * zscale,3)
+    eff_rad_kpc_err = round_number(eff_rad_arcsec_err * zscale,3)
 
     
     ser_index = hdr['1_N'].split(' ')[0]
@@ -117,7 +115,7 @@ def galfit_create_dataframe(df,galaxy_name,output_file_path,pxsc_zcal_const):
     chi2nu = hdr['CHI2NU']
     
     # adding all the values to a new column of the dataframe
-    df.loc[len(df)]=[z,x_center,x_center_err,y_center,y_center_err,mag,mag_err,eff_rad,eff_rad_err,eff_rad_arcsec,eff_rad_arcsec_err,kpc_per_arcsec.value,eff_rad_kpc,eff_rad_kpc_err,ser_index,ser_index_err,ax_rat,ax_rat_err,pos_ang,pos_ang_err,chi2,chi2nu]
+    df.loc[len(df)]=[z,x_center,x_center_err,y_center,y_center_err,mag,mag_err,eff_rad,eff_rad_err,eff_rad_arcsec,eff_rad_arcsec_err,zscale,eff_rad_kpc,eff_rad_kpc_err,ser_index,ser_index_err,ax_rat,ax_rat_err,pos_ang,pos_ang_err,chi2,chi2nu]
     df = df.astype('float64')
     
     return df,y_center,x_center,mag,eff_rad,ser_index,ax_rat,pos_ang
@@ -213,7 +211,7 @@ def imfit_create_dataframe(df,galaxy_name,redshift,param_file,pxsc_zcal_const):
     #if z == '0.00':
         
     # Obtaining a Quantity
-    kpc_per_arcsec = kpc_correction(galaxy_name)*kpc_unit
+    kpc_per_arcsec = zlocal_correction(galaxy_name)*kpc_unit
     
     eff_rad_kpc = round_number(eff_rad_arcsec * kpc_per_arcsec.value,3)
     eff_rad_kpc_err = round_number(eff_rad_arcsec_err * kpc_per_arcsec.value,3)
