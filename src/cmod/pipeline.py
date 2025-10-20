@@ -20,7 +20,7 @@ import time
 import warnings
 warnings.filterwarnings('ignore')
 
-from .cosmology import zlocal_correction, z_counts_dimming
+from .cosmology import zlocal_correction, z_counts_dimming, z_dimming_factor
 from .fitting import (constraints_values, create_constraints, 
                           create_script, create_conf_imfit,
                           initial_params, create_initiaL_params)
@@ -389,33 +389,48 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                 frame_res_path = resampling_frame(frame_path=frame_ori_path,
                                                   resample_frame_size=frame_res_shape)
                 
+                
+                
                 # Opening resampling fits
                 hdr_res,frame_res,frame_res_name_noext = open_fits(frame_res_path)
                 frame_res_name = f'{frame_res_name_noext}.fits'
                 
                 zoom_applied = zoom_factor(frame_ori_shape,frame_res_shape)
                 
+                if redshift_value != 0.0:
+                    frame_dim = frame_res * z_dimming_factor(redshift_value)
+                else:
+                    frame_dim = frame_res * z_dimming_factor(zlocal_value)
+                
+                frame_dim_name = f'{frame_res_name_noext}_dim.fits'
+                frame_dim_name_noext = frame_dim_name.split('.fits')[0]
+                frame_dim_path = f'{analysis_folder_path}/{frame_dim_name}'
+                
+                frame_dim_shape = frame_res_shape
+                
+                fits.writeto(frame_dim_path, frame_dim, header=hdr_res, overwrite=True)
+                
                 # Obtaining the center of the galaxy as the maximun central pixel value
                 # Only for the first image
-                frame_res_max_pix_value, frame_res_max_pix_value_pos = max_center_value(frame_res,crop_factor)
+                frame_dim_max_pix_value, frame_dim_max_pix_value_pos = max_center_value(frame_dim,crop_factor)
 
                 #if frame_pos == 0:
                     
                 try:
                     if initial_conditions_mode == 0:
-                        gal_iso_fit_csv_path = isophote_fitting(frame_res_path,
-                                                                frame_res_max_pix_value_pos,
-                                                                frame_res_shape,
-                                                                cons=pxsc_zcal_const,
+                        gal_iso_fit_csv_path = isophote_fitting(frame_dim_path,
+                                                                frame_dim_max_pix_value_pos,
+                                                                frame_dim_shape,
+                                                                cons=(sim_pixel_scale,zcal_const),
                                                                 output_path=analysis_folder_path)
                         gal_iso_fit_df = pd.read_csv(gal_iso_fit_csv_path)
                         (break_pos, break_pos_bul, I_0_disk_in, 
-                            h_disk_in, n_bul_in, r_e_bul_in, I_e_bul_in) = initial_conditions(frame_res_name_noext,
+                            h_disk_in, n_bul_in, r_e_bul_in, I_e_bul_in) = initial_conditions(frame_dim_name_noext,
                                                                                             gal_iso_fit_df, 
                                                                                             'sma', 
                                                                                             'intens', 
                                                                                             'intens_err',
-                                                                                            const=pxsc_zcal_const,
+                                                                                            const=(sim_pixel_scale,zcal_const),
                                                                                             output_path=analysis_folder_path)
                             
                         # Computing the mean values from the external partes of the galaxy
@@ -433,16 +448,9 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
 
                 
                 # Obtaining them toal surface magnitude of the frame
-                frame_ori_counts = np.nansum(frame_ori)
+                frame_dim_counts = np.nansum(frame_dim)
                 
-                if redshift_value != 0.0:
-                    frame_res_counts = z_counts_dimming(zsim=redshift_value,
-                                                            zlocal_counts=frame_ori_counts)
-                else:
-                    frame_res_counts = z_counts_dimming(zsim=zlocal_value,
-                                                            zlocal_counts=frame_ori_counts)
-                
-                frame_res_total_mag = values_counts_to_mag(frame_res_counts,
+                frame_dim_total_mag = values_counts_to_mag(frame_dim_counts,
                                                             const = pxsc_zcal_const)    
                 
                 # Creating a script to run galfit or imfit
@@ -456,10 +464,10 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
 
                 
                 # the ouput file name will be
-                output_file_name = f'{frame_res_name_noext}_{analysis_programme}.fits'
+                output_file_name = f'{frame_dim_name_noext}_{analysis_programme}.fits'
                 output_file_path = f'{analysis_folder_path}/{output_file_name}'
             
-                residual_name = f'{frame_res_name_noext}_{analysis_programme}_residual.fits'
+                residual_name = f'{frame_dim_name_noext}_{analysis_programme}_residual.fits'
                 residual_path = f'{analysis_folder_name}/{residual_name}'
                 
                 # For versions using inout methodology
@@ -477,8 +485,8 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                                         file_shape = frame_res_shape,
                                         zp_const = zcal_const,
                                         pix_scl = sim_pixel_scale,
-                                        img_center = frame_res_max_pix_value_pos,
-                                        int_mag = frame_res_total_mag,
+                                        img_center = frame_dim_max_pix_value_pos,
+                                        int_mag = frame_dim_total_mag,
                                         eff_rad = r_e_bul_in,
                                         ser_ind = n_bul_in,
                                         ax_rat = ax_rat_in,
@@ -516,8 +524,8 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                                         file_shape = frame_res_shape,
                                         zp_const = zcal_const,
                                         pix_scl = sim_pixel_scale,
-                                        img_center = frame_res_max_pix_value_pos,
-                                        int_mag = frame_res_total_mag,
+                                        img_center = frame_dim_max_pix_value_pos,
+                                        int_mag = frame_dim_total_mag,
                                         eff_rad = r_e_bul_in,
                                         ser_ind = n_bul_in,
                                         ax_rat = ax_rat_in,
@@ -533,14 +541,14 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                             pa_deg_in = round_number(pa_deg_in,3)
                             
                             if I_e_bul_in <= 1:
-                                I_e_bul_in = round_number(frame_res_max_pix_value/5, 3)
+                                I_e_bul_in = round_number(frame_dim_max_pix_value/5, 3)
 
                             
                             create_conf_imfit(file=script_file,
                                     funct=['Sersic'],
                                     galaxy = galaxy_name,
-                                    img_center_x = [frame_res_max_pix_value_pos[1],frame_res_max_pix_value_pos[1]-1,frame_res_max_pix_value_pos[1]+1],
-                                    img_center_y = [frame_res_max_pix_value_pos[0],frame_res_max_pix_value_pos[0]-1,frame_res_max_pix_value_pos[0]+1],
+                                    img_center_x = [frame_dim_max_pix_value_pos[1],frame_dim_max_pix_value_pos[1]-1,frame_dim_max_pix_value_pos[1]+1],
+                                    img_center_y = [frame_dim_max_pix_value_pos[0],frame_dim_max_pix_value_pos[0]-1,frame_dim_max_pix_value_pos[0]+1],
                                     pa_ser = [pa_deg_in,0,180],
                                     ell_ser= [ell_mean_in,0.05,0.95],
                                     n=[n_bul_in,0.6,6],
@@ -558,8 +566,8 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                                     file_shape = frame_res_shape,
                                     zp_const = zcal_const,
                                     pix_scl = sim_pixel_scale,
-                                    img_center = frame_res_max_pix_value_pos,
-                                    int_mag = frame_res_total_mag,
+                                    img_center = frame_dim_max_pix_value_pos,
+                                    int_mag = frame_dim_total_mag,
                                     eff_rad = r_e_bul_in,
                                     ser_ind = n_bul_in,
                                     ax_rat = ax_rat_in,

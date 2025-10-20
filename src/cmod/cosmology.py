@@ -95,12 +95,16 @@ def cosmological_scale(z):
 
 def z_counts_dimming(zsim,zlocal_counts):
     
-    zsim_counts = zlocal_counts * (1 + zsim)**(-4)
+    zsim_counts = zlocal_counts * z_dimming_factor(zsim)
     
     return zsim_counts
 
 def z_diff_counts(zori,ori_counts,zsim):
     
-    z_diff_counts = ori_counts * (1+zsim)**(-4) / (1+zori)**(-4)
+    z_diff_counts = ori_counts * z_dimming_factor(zsim) / z_dimming_factor(zori)
     
-    return z_diff_counts
+    return 
+
+def z_dimming_factor(z):
+    
+    return (1+z)**(-4)
