@@ -149,7 +149,7 @@ def run_analysis_pipeline():
             
         elif psf == 'small':
             psf_fits_name = f'psf_small_stacked_original_flux_norm.fits'
-            psf_fits_path_ori = f'{cwd_scripts}/{psf_fits_name}'
+            psf_fits_path_ori = f'{cwd_global}/data/{psf_fits_name}'
             psf_fits_path = f'{analysis_folder_path}/{psf_fits_name}'
             shutil.copyfile(f'{psf_fits_path_ori}',f'{psf_fits_path}')
         else:
@@ -394,6 +394,7 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                 
                 hdr,frame,frame_name = open_fits(frame_path)
                 frame_name_noext = frame_name
+                frame_name = f'{frame_name}.fits'
 
                 frame_shape = frame_resampled_size
                 

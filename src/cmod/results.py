@@ -44,7 +44,7 @@ def galfit_create_dataframe(df,galaxy_name,output_file_path,pxsc_zcal_const):
     
     print('Creating a dataframe to store results')
     
-    hdr,img,frame_output_name = open_fits(output_file_path)
+    hdr,img,frame_output_name = open_fits(output_file_path,dim=2)
     
     # find the redshif in the ouput file name
     z = re.findall('z\d.\d\d',output_file_path)[0][1:]
