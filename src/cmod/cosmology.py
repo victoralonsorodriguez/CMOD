@@ -91,3 +91,16 @@ def cosmological_scale(z):
     cosmo_scale = 1./cosmo_model.arcsec_per_kpc_proper(z)
     
     return cosmo_scale.value
+
+
+def z_counts_dimming(zsim,zlocal_counts):
+    
+    zsim_counts = zlocal_counts * (1 + zsim)**(-4)
+    
+    return zsim_counts
+
+def z_diff_counts(zori,ori_counts,zsim):
+    
+    z_diff_counts = ori_counts * (1+zsim)**(-4) / (1+zori)**(-4)
+    
+    return z_diff_counts

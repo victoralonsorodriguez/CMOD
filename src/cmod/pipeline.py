@@ -20,12 +20,12 @@ import time
 import warnings
 warnings.filterwarnings('ignore')
 
-from .cosmology import zlocal_correction
+from .cosmology import zlocal_correction, z_counts_dimming, z_diff_counts
 from .fitting import (constraints_values, create_constraints, 
                           create_script, create_conf_imfit,
                           initial_params, create_initiaL_params)
 from .io import open_fits, argparse_values
-from .photometry import fits_mag_to_counts, values_counts_to_mag, values_mag_to_counts, z_counts_dimming, z_diff_counts
+from .photometry import fits_mag_to_counts, values_counts_to_mag, values_mag_to_counts
 from .processing import max_center_value, isophote_fitting, initial_conditions, create_psf
 from .resampling import resampling_frame_pixels,resampling_frame, zoom_factor, resampled_center
 from .results import galfit_init_dataframe, galfit_create_dataframe,imfit_init_dataframe,imfit_create_dataframe
@@ -105,8 +105,8 @@ def run_analysis_pipeline():
         # Galaxy analysis new directory
         next_version = '00'
         version_base_name = f'{galaxy_name}_analysis'
-        version_file_name = f'{galaxy_name}.log'
-        version_file_path = f'{PATH_OUTPUTS}/{version_file_name}'
+        version_file_name = f'txt_{galaxy_name}_version.txt'
+        version_file_path = f'{PATH_DATA}/{version_file_name}'
         
         # If version control is activated
         if version_control == 1:
@@ -392,7 +392,7 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                                                                galaxy_shape = frame_ori_shape,
                                                                original_sensor_pixscale=pixel_scale,
                                                                zsim=redshift_value,
-                                                               simulated_sensor_pxscale=0.031)
+                                                               simulated_sensor_pxscale=0.2)
                 
                 frame_res_path = resampling_frame(frame_path=frame_ori_path,
                                                   resample_frame_size=frame_res_shape)
@@ -482,7 +482,7 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                         if analysis_programme == 'Galfit':
                             
                             zoom_between_frames = zoom_factor(frame_pre_shape,
-                                                            frame_ori_shape)
+                                                            frame_res_shape)
                             
                             frame_res_center_pos = resampled_center(frame_pre_center_pos,
                                                                     zoom_between_frames)
@@ -493,7 +493,7 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                             
                             frame_res_total_mag = values_counts_to_mag(frame_res_counts)
                             
-                            frame_res_eff_rad = frame_pre_eff_rad * zoom_between_frames
+                            frame_res_eff_rad = frame_pre_eff_rad * np.mean(zoom_between_frames)
                             
                             # calling the function to create the script
                             create_script(file=script_file,
@@ -502,7 +502,7 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                                         file_shape = frame_res_shape,
                                         zp_const = zcal_const,
                                         #pix_scl = pixel_scale,
-                                        pix_scl = 0.031,
+                                        pix_scl = 0.2,
                                         img_center = frame_res_center_pos,
                                         #img_center = (y_center,x_center),
                                         int_mag = frame_res_total_mag,
@@ -543,7 +543,7 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                                         file_shape = frame_res_shape,
                                         zp_const = zcal_const,
                                         #pix_scl = pixel_scale,
-                                        pix_scl = 0.031,
+                                        pix_scl = 0.2,
                                         img_center = frame_res_center_pos,
                                         int_mag = frame_res_total_mag,
                                         eff_rad = r_e_bul_in,
@@ -661,15 +661,15 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                     
                 if frame_pre_values == True:
                     # Saving some variables for the next frame computations
-                    frame_pre_counts = values_mag_to_counts(mag,const = pxsc_zcal_const)
-                    frame_pre_center_pos = (y_center,x_center)
-                    frame_pre_eff_rad = eff_rad
+                    frame_pre_counts = values_mag_to_counts(float(mag),const = pxsc_zcal_const)
+                    frame_pre_center_pos = (float(y_center),float(x_center))
+                    frame_pre_eff_rad = float(eff_rad)
                     frame_pre_shape = frame_res_shape
                     
                     if redshift_value != 0.0:
                         frame_pre_z = redshift_value
                     else:
-                        frame_pre_z = zlocal_correction
+                        frame_pre_z = zlocal_correction(galaxy_name)
                     
                 
                     

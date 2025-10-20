@@ -150,16 +150,3 @@ def filter_wl_dict():
                 
                 
     return filter_system_corrected_names,filter_wavelenght_dict,filter_names_dict
-
-
-def z_counts_dimming(zsim,zlocal_counts):
-    
-    zsim_counts = zlocal_counts * (1 + zsim)**(-4)
-    
-    return zsim_counts
-
-def z_diff_counts(zori,ori_counts,zsim):
-    
-    z_diff_counts = ori_counts * (1+zsim)**(-4) / (1+zori)**(-4)
-    
-    return z_diff_counts
