@@ -76,6 +76,7 @@ def resampling_frame(frame_path,resample_frame_size):
     resampled_frame_path = f'{frame_path.split(fits_name)[0]}/{resampled_frame_name}'
     
     fits.writeto(resampled_frame_path, resampled_frame, header=hdr, overwrite=True)
+    print(f'\tResampling done')
     return resampled_frame_path
 
 

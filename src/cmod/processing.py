@@ -53,13 +53,13 @@ def isophote_fitting(img_gal_path,
     isophote_table = []
     pa_ind = 0
     pa_ini = 2
-    pa_fin = 178
+    pa_fin = 358
     pa_steps = (pa_fin - pa_ini + 1)
     pa_range = np.linspace(pa_ini,pa_fin,pa_steps)
     
     gal_img_fit[np.isnan(gal_img_fit)] = 0
 
-    sma = max(gal_size) * 0.7
+    sma = max(gal_size) * 0.2
 
     # Image should be in counts
     while len(isophote_table) == 0:
@@ -69,7 +69,7 @@ def isophote_fitting(img_gal_path,
         print(f'\tAtempting to converge with PA={pa_range[pa_ind]:.2f} deg')
         
         geometry = EllipseGeometry(x0=gal_center[1], y0=gal_center[0],
-                                   sma=50, # semimajor axis in pixels
+                                   sma=sma, # semimajor axis in pixels
                                    eps=0.5,
                                    pa=pa_range[pa_ind] * np.pi / 180.0) # position angle in radians
         
@@ -146,16 +146,21 @@ def max_center_value(data,
     nrow = data.shape[0]
     ncol = data.shape[1]
     
-    # We are going to crop the frame as we want to obtain the center
-    # that will correspond with the maximun intensity value in its center
-    # The crop is to avoid external stars
-    nrow_range = (nrow//crop_factor)
-    ncol_range = (ncol//crop_factor)
-    
-    # Obtaining the nearest to the center maximun pixel value position to center the model
-    frame_center_area = data[nrow//2 - nrow_range:nrow//2 + nrow_range, ncol//2 - ncol_range:ncol//2 + ncol_range]
-    
-    max_pix_value_center = np.nanmax(frame_center_area)
+    if nrow<100 or ncol<100:
+        max_pix_value_center = np.nanmax(data)
+    else:
+        # We are going to crop the frame as we want to obtain the center
+        # that will correspond with the maximun intensity value in its center
+        # The crop is to avoid external stars
+        nrow_range = (nrow//crop_factor)
+        ncol_range = (ncol//crop_factor)
+        
+        # Obtaining the nearest to the center maximun pixel value position to center the model
+        frame_center_area = data[nrow//2 - nrow_range:nrow//2 + nrow_range, ncol//2 - ncol_range:ncol//2 + ncol_range]
+        
+        max_pix_value_center = np.nanmax(frame_center_area)
+        
+        
     max_pix_value_pos_x = np.where(data == max_pix_value_center)[0][0]
     max_pix_value_pos_y = np.where(data == max_pix_value_center)[1][0]
     
