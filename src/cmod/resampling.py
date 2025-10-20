@@ -49,7 +49,7 @@ def resampling_frame(frame_path,resample_frame_size):
     # Loading the fits file
     hdr,img,fits_name = open_fits(frame_path)
     
-    print(f'Resampling file: {fits_name}')
+    print(f'\tResampling file: {fits_name}')
     
     # Managing nan values
     nan_mask = np.isnan(img)
@@ -77,6 +77,20 @@ def resampling_frame(frame_path,resample_frame_size):
     
     fits.writeto(resampled_frame_path, resampled_frame, header=hdr, overwrite=True)
     return resampled_frame_path
+
+
+def zoom_factor(ori_img_dim,sim_img_dim):
+    
+    zoom_applied = (sim_img_dim[0] / ori_img_dim[0], sim_img_dim[1] / ori_img_dim[1])
+    
+    return zoom_applied
+
+
+def resampled_center(ori_center_pos,zoom_factor):
+    
+    resampled_center_pos = (ori_center_pos[0] * zoom_factor[0], ori_center_pos[1] * zoom_factor[1])
+    
+    return resampled_center_pos
 
 
 if __name__ == '__main__':

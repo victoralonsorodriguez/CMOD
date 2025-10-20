@@ -25,7 +25,7 @@ def isophote_fitting(img_gal_path,
                      cons=None,
                      output_path='.'):
     
-    print('Performing the isophote fitting\n')
+    print('\n\tPerforming the isophote fitting\n')
     
     # Loading the galaxy image
     _,gal_img,gal_img_name = open_fits(img_gal_path)
@@ -66,7 +66,7 @@ def isophote_fitting(img_gal_path,
 
         
         # Defining a elliptical geometry
-        print(f'Atempting to converge with PA={pa_range[pa_ind]:.2f} deg')
+        print(f'\tAtempting to converge with PA={pa_range[pa_ind]:.2f} deg')
         
         geometry = EllipseGeometry(x0=gal_center[1], y0=gal_center[0],
                                    sma=50, # semimajor axis in pixels
