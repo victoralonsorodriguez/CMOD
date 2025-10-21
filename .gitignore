@@ -37,3 +37,6 @@ outputs/*
 !outputs/.gitkeep
 # Packaging 
 *.egg-info/
+# VSCode
+.vscode/*
+*.code-workspace
