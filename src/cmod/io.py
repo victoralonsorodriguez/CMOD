@@ -4,6 +4,8 @@ import sys
 import argparse
 import re
 import ast
+import pdb
+import os
 
 
 from astropy.io import fits
@@ -35,7 +37,7 @@ def open_fits(fits_path,
     
     # Open the fits with Astropy and sxtracting the header and 
     # the data from it
-    hdu = fits.open(f'{fits_path}')
+    hdu = fits.open(fits_path)
     hdr = hdu[dim].header
     img = hdu[dim].data
     
@@ -288,3 +290,30 @@ def argparse_values(phase):
         return (analysis_programme,system_list_mode,filters_list_mode,
                 mag_pairs_mode,plot_mode,plot_save_mode,plot_max_columns,
                 plot_analysis_version)
+        
+        
+        
+def extract_filter_name(fits_filename):
+    """
+    Extracts the filter name from a CMOD FITS filename.
+
+    Assumes the filter name is the last part of the filename
+    before the '.fits' extension, separated by underscores.
+    Example: 'n1309_VBIN020_SL_zSimJ_EucHab.fits' -> 'EucHab'
+
+    Args:
+        fits_filename (str): The full filename (e.g., 'galaxy_..._filter.fits').
+
+    Returns:
+        str: The extracted filter name, or None if the format is unexpected.
+    """
+    try:
+        # Get the base name without the extension
+        base_name = os.path.splitext(fits_filename)[0]
+        # Split by underscore and take the last part
+        filter_name = base_name.split('_')[-1]
+        return filter_name
+    except IndexError:
+        # Handle cases where splitting might fail (e.g., no underscores)
+        print(f"Warning: Could not extract filter name from '{fits_filename}'. Unexpected format.")
+        return None

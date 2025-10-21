@@ -1,40 +1,110 @@
 # En src/cmod/resampling.py
 import numpy as np
 from scipy.ndimage import zoom
-from astropy.io import fits # Necesario para guardar (por ahora)
+from astropy.io import fits
+from astropy.cosmology import FlatLambdaCDM
 
-def geometric_resample(input_data, factor, order=1):
-    """
-    Realiza un resampleo geométrico simple de una imagen.
+import cv2
+from skimage.transform import resize
 
-    Args:
-        input_data (np.ndarray): Imagen de entrada.
-        factor (float): Factor de resampleo. >1 para agrandar, <1 para reducir.
-        order (int): Orden de interpolación (0=vecino más cercano, 1=bilineal, 3=cúbica).
+from cmod.cosmology import zlocal_correction, cosmological_scale
+from cmod.io import open_fits
 
-    Returns:
-        np.ndarray: Imagen resampleada.
-    """
-    # Asegurarse de que factor_resize sea < 1 para reducir si factor > 1
-    # O > 1 para agrandar si factor < 1. 
-    # Si factor es "aumentos", el factor de zoom es 1/aumentos.
-    # Si factor es "reducción", el factor de zoom es 1/reducción.
-    # Mantengamos factor como el cambio de tamaño físico (factor > 1 agranda)
-    zoom_factor = 1.0 / factor 
+def resampling_frame_pixels(galaxy,
+                            galaxy_shape,
+                            original_sensor_pixscale,
+                            zsim,
+                            simulated_sensor_pxscale):
+    
+    # Local galaxy reshift and scale
+    galaxy_zlocal = zlocal_correction(galaxy)
+    galaxy_scale = cosmological_scale(galaxy_zlocal)
+    
+    # Lcoal galaxy pixel scale and total field of view
+    galaxy_pixscale = galaxy_scale * original_sensor_pixscale
+    galaxy_fov_X = galaxy_pixscale * galaxy_shape[1]
+    galaxy_fov_Y = galaxy_pixscale * galaxy_shape[0]
+    
+    # For a simulated redshift: pixel scale and field of view
+    if zsim == 0.0:
+        zsim = galaxy_zlocal
+    zsim_scale = cosmological_scale(zsim)
+    
+    zsim_fov_X = galaxy_fov_X / zsim_scale
+    zsim_fov_Y = galaxy_fov_Y / zsim_scale
+    
+    # Computing pixel side of resampled image
+    pixel_size_X = int(round(zsim_fov_X / simulated_sensor_pxscale,0))
+    pixel_size_Y = int(round(zsim_fov_Y / simulated_sensor_pxscale,0))
+    
+    resample_frame_size = (pixel_size_Y,pixel_size_X)
+    
+    
+    return resample_frame_size
 
-    resampled_data = zoom(input_data, zoom_factor, order=order)
-    return resampled_data
 
-# --- Código de Prueba (Temporal) ---
-# Esto nos permite probar el módulo directamente, 
-# reemplazando el script antiguo.
+
+def resampling_frame(frame_path,resample_frame_size):
+    
+    # Loading the fits file
+    hdr,img,fits_name = open_fits(frame_path)
+    
+    print(f'\tResampling file: {fits_name}')
+    
+    # Managing nan values
+    nan_mask = np.isnan(img)
+    image_no_nan = np.nan_to_num(img, nan=0.0)
+    
+    # Apliying the zoom function
+    resampled_frame_no_nan = resize(image_no_nan,
+                                    resample_frame_size,
+                                    order=3, 
+                                    anti_aliasing=False, 
+                                    mode='constant', cval=0.0)
+    
+    resampled_nan_mask = resize(nan_mask.astype(float),
+                                resample_frame_size,
+                                order=0, 
+                                anti_aliasing=False,
+                                mode='constant', cval=0.0)
+    
+    resampled_frame = resampled_frame_no_nan
+    resampled_frame[resampled_nan_mask > 0.5] = np.nan
+    
+    # Renaming the frame
+    resampled_frame_name = f'{fits_name}_r{int(resample_frame_size[1])}p.fits'
+    resampled_frame_path = f'{frame_path.split(fits_name)[0]}/{resampled_frame_name}'
+    
+    fits.writeto(resampled_frame_path, resampled_frame, header=hdr, overwrite=True)
+    print(f'\tResampling done')
+    return resampled_frame_path
+
+
+def zoom_factor(ori_img_dim,sim_img_dim):
+    
+    zoom_applied = (sim_img_dim[0] / ori_img_dim[0], sim_img_dim[1] / ori_img_dim[1])
+    
+    return zoom_applied
+
+
+def resampled_center(ori_center_pos,zoom_factor):
+    
+    resampled_center_pos = (ori_center_pos[0] * zoom_factor[0], ori_center_pos[1] * zoom_factor[1])
+    
+    return resampled_center_pos
+
+
 if __name__ == '__main__':
-    imagen_fits = '../../pruebas.fits' # Asume que se ejecuta desde src/cmod/
-    data = fits.getdata(imagen_fits)
-
-    resize_factor = 1.5 # Factor para hacerla 1.5x más pequeña
-
-    data_reducida = geometric_resample(data, resize_factor, order=1)
-
-    fits.writeto('../../pruebas_resize_new.fits', data_reducida, overwrite=True)
-    print("Imagen resampleada guardada como 'pruebas_resize_new.fits'")
+    
+    galaxy_name = 'M84'
+    pixel_scale = 0.2
+    sensor_pix = 300
+    z = 0.0
+    sim_pix_scale = 0.11
+    
+    pixels,zoom_factor = resampling_frame_pixels(galaxy_name,pixel_scale,sensor_pix,
+                                         z,sim_pix_scale)
+    
+    fits_path = '/Users/victor/TFG/galaxias/CMOD/data/M84_analysis_V10_Galfit/m84_VBIN018_SL_zSimJ_EucHab/m84_VBIN018_SL_zSimJ_EucHab_z0.00_counts.fits' 
+    
+    resampled_frame_path = resampling_frame(fits_path,zoom_factor,pixels)

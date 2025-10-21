@@ -1,5 +1,9 @@
 import numpy as np
+from astropy.cosmology import FlatLambdaCDM
+
 from .utils import round_number
+
+
 
 
 ###------------------PIXELS, ARCSEC AND PARSECS------------------###
@@ -58,13 +62,13 @@ def WtR(wl,filter_wl):
 
 
 # This scripts avoids the 0 kpc galaxy radius at z=0
-def kpc_correction(galaxy):
+def zlocal_correction(galaxy):
 
     # Dictionary to store the z=0 kpc/'' factor correction
-    scale_dict = {'ESO498G05':0.192,
-                    'IC719':0.154,
-                    'IC2051':0.125,
-                    'M84':0.095,
+    zlocal_dict = {'ESO498G05':0.192,
+                    'IC719':0.006114, # z = 0.006114
+                    'IC2051':0.125, 
+                    'M84':0.003392, # z = 0.003392
                     'NGC0289':0.096,
                     'NGC307':0.250,
                     'NGC788':0.266,
@@ -78,4 +82,29 @@ def kpc_correction(galaxy):
                     'NGC6958':0.176
                     }
                     
-    return scale_dict[galaxy]
+    return zlocal_dict[galaxy]
+
+
+def cosmological_scale(z):
+    
+    cosmo_model = FlatLambdaCDM(H0=69.6, Om0=0.286) # https://www.astro.ucla.edu/~wright/CosmoCalc.html
+    cosmo_scale = 1./cosmo_model.arcsec_per_kpc_proper(z)
+    
+    return cosmo_scale.value
+
+
+def z_counts_dimming(zsim,zlocal_counts):
+    
+    zsim_counts = zlocal_counts * z_dimming_factor(zsim)
+    
+    return zsim_counts
+
+def z_diff_counts(zori,ori_counts,zsim):
+    
+    z_diff_counts = ori_counts * z_dimming_factor(zsim) / z_dimming_factor(zori)
+    
+    return 
+
+def z_dimming_factor(z):
+    
+    return (1+z)**(-4)

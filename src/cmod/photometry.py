@@ -150,3 +150,29 @@ def filter_wl_dict():
                 
                 
     return filter_system_corrected_names,filter_wavelenght_dict,filter_names_dict
+
+
+def filter_pixel_scale_dict(filter_name):
+    
+    filter_pixel_scale_dict = {
+        # Euclid Filters
+        "EucHab": 0.3, "EucJab": 0.3, "EucYab": 0.3,
+        "EucVISab": 0.1,
+        # JWST NIRCam LW Filters
+        "F277W": 0.063, "F356W": 0.063, "F444W": 0.063,
+        # JWST NIRCam SW Filters
+        "F070W": 0.031, "F090W": 0.031, "F115W": 0.031, "F140M": 0.031,
+        "F150W": 0.031, "F162M": 0.031, "F182M": 0.031, "F200W": 0.031,
+        "F210M": 0.031,
+        # HST WFC3/UVIS Filters (using your values)
+        "HSTF475W": 0.04, "HSTF555W": 0.04, "HSTF606W": 0.04, "HSTF814W": 0.04,
+        # HST WFPC2 Filters (using your values)
+        "HSTF300W": 0.0996, "HSTF450W": 0.0996, "HSTF569W": 0.0996, "HSTF791W": 0.0996,
+        # HST Specific Filter (using your value)
+        "HSTF435W": 0.025,
+        # Johnson/Vega Filters (using your value)
+        "Rve": 0.396, "Ive": 0.396, "Uve": 0.396, "Hve": 0.396,
+        "Jve": 0.396, "Kve": 0.396, "Vve": 0.396
+    }
+    
+    return filter_pixel_scale_dict[filter_name]

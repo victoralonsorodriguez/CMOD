@@ -13,19 +13,21 @@ import subprocess
 import shutil
 import mmap
 import struct
+import traceback
 
 import pdb
 import time
 import warnings
 warnings.filterwarnings('ignore')
 
-
+from .cosmology import zlocal_correction, z_counts_dimming, z_dimming_factor
 from .fitting import (constraints_values, create_constraints, 
                           create_script, create_conf_imfit,
                           initial_params, create_initiaL_params)
-from .io import open_fits, argparse_values
-from .photometry import fits_mag_to_counts, values_counts_to_mag
+from .io import open_fits, argparse_values, extract_filter_name
+from .photometry import fits_mag_to_counts, values_counts_to_mag, filter_pixel_scale_dict
 from .processing import max_center_value, isophote_fitting, initial_conditions, create_psf
+from .resampling import resampling_frame_pixels,resampling_frame, zoom_factor
 from .results import galfit_init_dataframe, galfit_create_dataframe,imfit_init_dataframe,imfit_create_dataframe
 from .utils import (Cronometro, round_number, create_folder, rad_to_deg_abs,
                         version_directory, version_file, version_file_last)
@@ -46,20 +48,22 @@ def run_analysis_pipeline():
     # Loading configuration
     (analysis_programme,analysis_version,analysis_range,
                 version_continuation,version_control,psf,initial_conditions_mode,
-                pixel_scale,zcal_const,crop_factor) = argparse_values(phase='analysis')
+                ori_pixel_scale,zcal_const,crop_factor) = argparse_values(phase='analysis')
     
     # Obtaining the current working directory
     # in which the programme is executed
-    SCRIPT_PATH = Path(__file__).resolve()
-    cwd_scripts = SCRIPT_PATH.parent
-    cwd_src = cwd_scripts.parent
-    cwd_global = cwd_src.parent
-    
+    PATH_FILE = Path(__file__).resolve()
+    PATH_SRC_CMOD = PATH_FILE.parent
+    PATH_SRC = PATH_SRC_CMOD.parent
+    PATH_REPO = PATH_SRC.parent
+    PATH_DATA = PATH_REPO / "data"
+    PATH_OUTPUTS = PATH_REPO / "outputs"
+    PATH_LOGS = PATH_OUTPUTS / "logs"
     
     datacube_folder_name_list = []
     datacube_folder_path_list = []
     
-    for path, subdir, file in sorted(os.walk(cwd_global)):
+    for path, subdir, file in sorted(os.walk(PATH_DATA)):
         for subdir_name in subdir:
             if 'original_fits' in subdir_name:
                 datacube_folder_name_list.append(subdir_name)
@@ -68,18 +72,18 @@ def run_analysis_pipeline():
     for path_pos,path in enumerate(datacube_folder_path_list): 
         
         # Changing the directory to obtain the original path
-        os.chdir(path)
-        cwd_galaxy = os.getcwd()
+        # os.chdir(path)
+        # cwd_galaxy = os.getcwd()
         
         # Returning to the scripts directory
-        os.chdir(cwd_scripts)
+        # os.chdir(PATH_SRC_CMOD)
 
         # Galaxy name obtaiane from datacube directories
         galaxy_name = (datacube_folder_name_list[path_pos].split('/')[-1]).split('_')[0]
         
         # Absolute path to the original fits datacubes
         # This files are the ones to be analyzed
-        datacube_original_folder_path = f'{cwd_galaxy}/{galaxy_name}_original_fits'
+        datacube_original_folder_path = f'{PATH_DATA}/{galaxy_name}_original_fits'
         
         # Obtaining the datacube names
         datacube_name_list = []
@@ -92,7 +96,7 @@ def run_analysis_pipeline():
         
         # We need the  pixel scale and the calibration constant to convert 
         # from counts to magnitudes
-        pxsc_zcal_const = (pixel_scale,zcal_const)
+        pxsc_zcal_const = (ori_pixel_scale,zcal_const)
         
         
         ###------------------VERSION CONTROL------------------###
@@ -102,7 +106,7 @@ def run_analysis_pipeline():
         next_version = '00'
         version_base_name = f'{galaxy_name}_analysis'
         version_file_name = f'txt_{galaxy_name}_version.txt'
-        version_file_path = f'{cwd_galaxy}/{version_file_name}'
+        version_file_path = f'{PATH_DATA}/{version_file_name}'
         
         # If version control is activated
         if version_control == 1:
@@ -110,9 +114,9 @@ def run_analysis_pipeline():
             # Obtained the last runned version from the
             # version file and the directory version name
             prev_ver_file = version_file_last(version_file_path)
-            prev_ver_dir = version_directory(cwd=cwd_galaxy,
+            prev_ver_dir = version_directory(cwd=PATH_DATA,
                                             base_name = version_base_name,
-                                            original_dir = cwd_galaxy)
+                                            original_dir = PATH_DATA)
             
             next_version = max(prev_ver_file,prev_ver_dir)+1
             if next_version < 10:
@@ -123,7 +127,7 @@ def run_analysis_pipeline():
                     archivo=version_file_path,
                     analysis_programe=analysis_programme)
         analysis_folder_name = f'{version_base_name}_V{next_version}_{analysis_programme}'
-        analysis_folder_path = f'{cwd_galaxy}/{analysis_folder_name}'
+        analysis_folder_path = f'{PATH_DATA}/{analysis_folder_name}'
         create_folder(analysis_folder_path)
 
         ###------------------POINT SPREAD FUNCTION------------------###
@@ -139,16 +143,16 @@ def run_analysis_pipeline():
              psf_fits_path) =  create_psf(galaxy_name=galaxy_name,
                                             datacube_folder_path=datacube_original_folder_path,
                                             analysis_folder_path=analysis_folder_path,
-                                            pixel_scale=pixel_scale,
+                                            pixel_scale=ori_pixel_scale,
                                             zcal_const=zcal_const,
                                             fwhm=fwhm,
                                             beta=beta)
             
-            os.chdir(cwd_scripts)
+            os.chdir(PATH_SRC_CMOD)
             
         elif psf == 'small':
             psf_fits_name = f'psf_small_stacked_original_flux_norm.fits'
-            psf_fits_path_ori = f'{cwd_scripts}/{psf_fits_name}'
+            psf_fits_path_ori = f'{PATH_REPO}/data/{psf_fits_name}'
             psf_fits_path = f'{analysis_folder_path}/{psf_fits_name}'
             shutil.copyfile(f'{psf_fits_path_ori}',f'{psf_fits_path}')
         else:
@@ -223,32 +227,19 @@ def run_analysis_pipeline():
         
         try:
             print(f'\nAnalysing {galaxy_name} with {analysis_programme} '
-                    f'in the version {next_version}')
+                    f'in the run {next_version}')
             analisys(datacube_name_list, analysis_folder_path, analysis_programme, 
                      datacube_original_folder_path, pxsc_zcal_const, analysis_range, 
                      crop_factor, initial_conditions_mode, galaxy_name, 
                      psf_fits_name, constraints_file_name, csv_folder_path,
-                     analysis_folder_name,analysis_version,zcal_const,pixel_scale,
-                     cwd_scripts)
-            print(f'\nThe analysis for {galaxy_name} with {analysis_programme}'
-                    f'in the version {next_version} has finished')
+                     analysis_folder_name,analysis_version,zcal_const,ori_pixel_scale,
+                     PATH_SRC_CMOD)
+            print(f'\nThe analysis for {galaxy_name} with {analysis_programme} '
+                    f'in the run {next_version} has finished')
             
         except Exception as e:
             print(f'\nError in the analysis module:\n{e}')
 
-        
-        """
-        ##########################################################
-        ###------------------PLOTTING RESULTS------------------###
-        ##########################################################
-        
-        try:
-            subprocess.run(['python3', 'py_plot_analysis.py', '-ar', '1'])
-            print(f'Plots are done')
-            
-        except Exception as e:
-            print(f'Error in plotting results:\n{e}')
-        """
         
         ###------------------TIME INFORMATION------------------###
         ##########################################################
@@ -272,8 +263,8 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
              datacube_original_folder_path, pxsc_zcal_const, analysis_range, 
              crop_factor, initial_conditions_mode, galaxy_name, 
              psf_fits_name, constraints_file_name, csv_folder_path,
-             analysis_folder_name,analysis_version,zcal_const,pixel_scale,
-             cwd_scripts):
+             analysis_folder_name,analysis_version,zcal_const,ori_pixel_scale,
+             PATH_SRC_CMOD):
     
     '''
     This function contains the analysis process
@@ -325,6 +316,11 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
         # Redshift step of the datacube
         redshift_step = datacube_flux_hdr['CDELT3']
         
+        # Filter system
+        filter_name = extract_filter_name(datacube_name)
+        sim_pixel_scale = filter_pixel_scale_dict(filter_name)
+        
+        
         ###------------------CREATING A DATAFRAME------------------###
         ##############################################################
 
@@ -342,7 +338,7 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
         ###------------------FRAME ANALYSIS------------------###
         ########################################################
         
-        # Determinen frame analysing range
+        # Determining frame analysing range
         if analysis_range == 0:
             frame_range = datacube_flux_data.shape[0]
         else:
@@ -351,20 +347,21 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
         try:
         
             # Analysing each frame individually
-            #for frame_pos in range(frame_range):
-            for frame_pos in range(1):
+            for frame_pos in range(frame_range):
+                
                 
                 # Obtaining the corresponding redshift of each frame
                 redshift_value = round_number(frame_pos * redshift_step,2)
+                zlocal_value = zlocal_correction(galaxy=galaxy_name)
                 
                 # We are going to export each frame of the data cube individually
-                frame = datacube_flux_data[frame_pos]
+                frame_ori = datacube_flux_data[frame_pos]
                 
-                frame_name = f'{datacube_name.split(".")[0]}_z{redshift_value:.2f}_counts.fits'
-                frame_name_noext = frame_name.split('.fits')[0]
-                frame_path = f'{analysis_folder_path}/{frame_name}'
+                frame_ori_name = f'{datacube_name.split(".")[0]}_z{redshift_value:.2f}_counts.fits'
+                frame_ori_name_noext = frame_ori_name.split('.fits')[0]
+                frame_ori_path = f'{analysis_folder_path}/{frame_ori_name}'
                 
-                print(f'\n\nAnalyzing {frame_name} with {analysis_programme}\n')     
+                print(f'\n\n\tAnalyzing {frame_ori_name} with {analysis_programme}\n')     
 
                 # Depending on the used version we are going to use a median 
                 # filter in order to reduce the image noise
@@ -373,64 +370,104 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                     '--inout' not in sys.argv or '--original' not in sys.argv):
                     
                     # Median filter applied to each frame                    
-                    frame = scp.ndimage.median_filter(frame, size=3, cval=np.nan)
+                    frame_med = scp.ndimage.median_filter(frame_ori, size=3, cval=np.nan)
+                    frame_ori = frame_med
 
                 # saving the subframe
-                fits.writeto(f'{frame_path}', frame, header=datacube_flux_hdr, overwrite=True)
-
+                fits.writeto(frame_ori_path, frame_ori, header=datacube_flux_hdr, overwrite=True)
+                
+                # Obtaining the frame shape
+                frame_ori_shape = frame_ori.shape
+                
+                # Resampling the frame
+                frame_res_shape = resampling_frame_pixels(galaxy=galaxy_name,
+                                                               galaxy_shape = frame_ori_shape,
+                                                               original_sensor_pixscale=ori_pixel_scale,
+                                                               zsim=redshift_value,
+                                                               simulated_sensor_pxscale=sim_pixel_scale)
+                
+                frame_res_path = resampling_frame(frame_path=frame_ori_path,
+                                                  resample_frame_size=frame_res_shape)
+                
+                
+                
+                # Opening resampling fits
+                hdr_res,frame_res,frame_res_name_noext = open_fits(frame_res_path)
+                frame_res_name = f'{frame_res_name_noext}.fits'
+                
+                zoom_applied = zoom_factor(frame_ori_shape,frame_res_shape)
+                
+                if redshift_value != 0.0:
+                    frame_dim = frame_res * z_dimming_factor(redshift_value)
+                else:
+                    frame_dim = frame_res * z_dimming_factor(zlocal_value)
+                
+                frame_dim_name = f'{frame_res_name_noext}_dim.fits'
+                frame_dim_name_noext = frame_dim_name.split('.fits')[0]
+                frame_dim_path = f'{analysis_folder_path}/{frame_dim_name}'
+                
+                frame_dim_shape = frame_res_shape
+                
+                fits.writeto(frame_dim_path, frame_dim, header=hdr_res, overwrite=True)
                 
                 # Obtaining the center of the galaxy as the maximun central pixel value
                 # Only for the first image
-                max_pix_value_center, max_pix_value_center_pos = max_center_value(frame,crop_factor)
+                frame_dim_max_pix_value, frame_dim_max_pix_value_pos = max_center_value(frame_dim,crop_factor)
 
-                if frame_pos == 0:
+                #if frame_pos == 0:
                     
-                    try:
-                        if initial_conditions_mode == 0:
-                            gal_iso_fit_csv_path = isophote_fitting(frame_path,max_pix_value_center_pos,cons=pxsc_zcal_const,output_path=analysis_folder_path)
-                            #gal_iso_fit_csv_path = f'{analysis_folder_path}/m84_VBIN018_SL_zSimJ_EucHab_z0.00_counts_isophote.csv'
-                            gal_iso_fit_df = pd.read_csv(gal_iso_fit_csv_path)
-                            break_pos, break_pos_bul, I_0_disk_in, h_disk_in, n_bul_in, r_e_bul_in, I_e_bul_in = initial_conditions(frame_name_noext,
-                                                                                                                                    gal_iso_fit_df, 
-                                                                                                                                    'sma', 
-                                                                                                                                    'intens', 
-                                                                                                                                    'intens_err',
-                                                                                                                                    const=pxsc_zcal_const,
-                                                                                                                                    output_path=analysis_folder_path)
-                                
-                            # Computing the mean values from the external partes of the galaxy
-                            ell_mean_in = round_number(gal_iso_fit_df.loc[break_pos:, 'ellipticity'].mean(),3)
-                            ax_rat_in = round_number(1 - ell_mean_in,3)
-                            pa_rad_mean_in = gal_iso_fit_df.loc[break_pos:, 'pa'].mean()
-                            pa_deg_in = round_number(rad_to_deg_abs(pa_rad_mean_in)-90,3)
+                try:
+                    if initial_conditions_mode == 0:
+                        gal_iso_fit_csv_path = isophote_fitting(frame_dim_path,
+                                                                frame_dim_max_pix_value_pos,
+                                                                frame_dim_shape,
+                                                                cons=(sim_pixel_scale,zcal_const),
+                                                                output_path=analysis_folder_path)
+                        gal_iso_fit_df = pd.read_csv(gal_iso_fit_csv_path)
+                        (break_pos, break_pos_bul, I_0_disk_in, 
+                            h_disk_in, n_bul_in, r_e_bul_in, I_e_bul_in) = initial_conditions(frame_dim_name_noext,
+                                                                                            gal_iso_fit_df, 
+                                                                                            'sma', 
+                                                                                            'intens', 
+                                                                                            'intens_err',
+                                                                                            const=(sim_pixel_scale,zcal_const),
+                                                                                            output_path=analysis_folder_path)
                             
-                    except Exception as e:
-                        print(f'Following error obtaining initial conditions'
-                            f'\n{e}')
-                
-                # Obtaining the frame shape
-                frame_shape = frame.shape
+                        # Computing the mean values from the external partes of the galaxy
+                        ell_mean_in = round_number(gal_iso_fit_df.loc[break_pos:, 'ellipticity'].mean(),3)
+                        ax_rat_in = round_number(1 - ell_mean_in,3)
+                        pa_rad_mean_in = gal_iso_fit_df.loc[break_pos:, 'pa'].mean()
+                        pa_deg_in = round_number(rad_to_deg_abs(pa_rad_mean_in)-90,3)
+                        
+                    else:
+                        r_e_bul_in,n_bul_in,ax_rat_in,pa_deg_in = initial_params(galaxy=galaxy_name)
+
+                except Exception as e:
+                    print(f'Following error obtaining initial conditions'
+                        f'\n{e}')
+
                 
                 # Obtaining them toal surface magnitude of the frame
-                frame_total_flux = np.nansum(frame)
-                frame_total_mag = values_counts_to_mag(frame_total_flux,
-                                                        const = pxsc_zcal_const)    
+                frame_dim_counts = np.nansum(frame_dim)
+                
+                frame_dim_total_mag = values_counts_to_mag(frame_dim_counts,
+                                                            const = pxsc_zcal_const)    
                 
                 # Creating a script to run galfit or imfit
                 if analysis_programme == 'Galfit':
-                    script_name = f'{frame_name_noext}_{analysis_programme}.script'
+                    script_name = f'{frame_res_name_noext}_{analysis_programme}.script'
                 elif analysis_programme == 'Imfit':
-                    script_name = f'{frame_name_noext}_{analysis_programme}.txt'
+                    script_name = f'{frame_res_name_noext}_{analysis_programme}.txt'
                     
                 script_path = f'{analysis_folder_path}/{script_name}'
                 script_file = open(f'{script_path}','w+')
 
                 
                 # the ouput file name will be
-                output_file_name = f'{frame_name_noext}_{analysis_programme}.fits'
+                output_file_name = f'{frame_dim_name_noext}_{analysis_programme}.fits'
                 output_file_path = f'{analysis_folder_path}/{output_file_name}'
             
-                residual_name = f'{frame_name_noext}_{analysis_programme}_residual.fits'
+                residual_name = f'{frame_dim_name_noext}_{analysis_programme}_residual.fits'
                 residual_path = f'{analysis_folder_name}/{residual_name}'
                 
                 # For versions using inout methodology
@@ -440,19 +477,20 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                     # parameters of previous frame as input
                     if frame_pos != 0:
                         if analysis_programme == 'Galfit':
+                            
                             # calling the function to create the script
                             create_script(file=script_file,
-                                        input_file_name=frame_name,
+                                        input_file_name=frame_res_name,
                                         output_file_name = output_file_name,
-                                        file_shape = frame_shape,
+                                        file_shape = frame_res_shape,
                                         zp_const = zcal_const,
-                                        pix_scl = pixel_scale,
-                                        img_center = (y_center,x_center),
-                                        int_mag = mag,
-                                        eff_rad = eff_rad,
-                                        ser_ind = ser_index,
-                                        ax_rat = ax_rat,
-                                        pos_ang = pos_ang,
+                                        pix_scl = sim_pixel_scale,
+                                        img_center = frame_dim_max_pix_value_pos,
+                                        int_mag = frame_dim_total_mag,
+                                        eff_rad = r_e_bul_in,
+                                        ser_ind = n_bul_in,
+                                        ax_rat = ax_rat_in,
+                                        pos_ang = pa_deg_in,
                                         psf= psf_fits_name,
                                         cons_file = constraints_file_name)
                             
@@ -481,13 +519,13 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                         if analysis_programme == 'Galfit':
                             # calling the function to create the script
                             create_script(file=script_file,
-                                        input_file_name=frame_name,
+                                        input_file_name=frame_res_name,
                                         output_file_name = output_file_name,
-                                        file_shape = frame_shape,
+                                        file_shape = frame_res_shape,
                                         zp_const = zcal_const,
-                                        pix_scl = pixel_scale,
-                                        img_center = max_pix_value_center_pos,
-                                        int_mag = frame_total_mag,
+                                        pix_scl = sim_pixel_scale,
+                                        img_center = frame_dim_max_pix_value_pos,
+                                        int_mag = frame_dim_total_mag,
                                         eff_rad = r_e_bul_in,
                                         ser_ind = n_bul_in,
                                         ax_rat = ax_rat_in,
@@ -503,14 +541,14 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                             pa_deg_in = round_number(pa_deg_in,3)
                             
                             if I_e_bul_in <= 1:
-                                I_e_bul_in = round_number(max_pix_value_center/5, 3)
+                                I_e_bul_in = round_number(frame_dim_max_pix_value/5, 3)
 
                             
                             create_conf_imfit(file=script_file,
                                     funct=['Sersic'],
                                     galaxy = galaxy_name,
-                                    img_center_x = [max_pix_value_center_pos[1],max_pix_value_center_pos[1]-1,max_pix_value_center_pos[1]+1],
-                                    img_center_y = [max_pix_value_center_pos[0],max_pix_value_center_pos[0]-1,max_pix_value_center_pos[0]+1],
+                                    img_center_x = [frame_dim_max_pix_value_pos[1],frame_dim_max_pix_value_pos[1]-1,frame_dim_max_pix_value_pos[1]+1],
+                                    img_center_y = [frame_dim_max_pix_value_pos[0],frame_dim_max_pix_value_pos[0]-1,frame_dim_max_pix_value_pos[0]+1],
                                     pa_ser = [pa_deg_in,0,180],
                                     ell_ser= [ell_mean_in,0.05,0.95],
                                     n=[n_bul_in,0.6,6],
@@ -523,13 +561,13 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                     if analysis_programme == 'Galfit':
                         # Initial parameters for every frame of the filter datacube
                         create_script(file=script_file,
-                                    input_file_name=frame_name,
+                                    input_file_name=frame_res_name,
                                     output_file_name = output_file_name,
-                                    file_shape = frame_shape,
+                                    file_shape = frame_res_shape,
                                     zp_const = zcal_const,
-                                    pix_scl = pixel_scale,
-                                    img_center = max_pix_value_center_pos,
-                                    int_mag = frame_total_mag,
+                                    pix_scl = sim_pixel_scale,
+                                    img_center = frame_dim_max_pix_value_pos,
+                                    int_mag = frame_dim_total_mag,
                                     eff_rad = r_e_bul_in,
                                     ser_ind = n_bul_in,
                                     ax_rat = ax_rat_in,
@@ -554,7 +592,7 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                 elif analysis_programme == 'Imfit':
                     
                     subprocess.run(['imfit',
-                                    frame_name,
+                                    frame_res_name,
                                     '-c', script_name,
                                     #'--mask',mask_path,
                                     '--gain=','4.76',
@@ -569,12 +607,12 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                 if analysis_programme == 'Imfit':
                     
                     fitting_file_name_ori = 'bestfit_parameters_imfit.dat'
-                    fitting_file_name_new = f'{frame_name_noext}_{analysis_programme}_bestfit_para.dat'
+                    fitting_file_name_new = f'{frame_res_name_noext}_{analysis_programme}_bestfit_param.dat'
                     fitting_file_path_new = f'{analysis_folder_path}/{fitting_file_name_new}'
                     if os.path.isfile(f'{fitting_file_name_ori}'):
                         shutil.move(fitting_file_name_ori, fitting_file_name_new)
                     
-                os.chdir(cwd_scripts)  
+                os.chdir(PATH_SRC_CMOD)  
                 
             
                 #-----OBTAINING THE PARAMETERS OF THE ANALYSIS----#
@@ -588,6 +626,7 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                     if os.path.isfile(f'{output_file_path}'):
                         
                         df,y_center,x_center,mag,eff_rad,ser_index,ax_rat,pos_ang = galfit_create_dataframe(df,galaxy_name,output_file_path,pxsc_zcal_const)
+
                         
                 elif analysis_programme == 'Imfit':
                     if os.path.isfile(f'{fitting_file_path_new}'):
@@ -597,7 +636,9 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
                                                                                                         redshift=redshift_value,
                                                                                                         param_file=fitting_file_path_new,
                                                                                                         pxsc_zcal_const=pxsc_zcal_const)
-                        
+                    
+                    
+                
                     
             #----WRITING THE DATAFRAME INTO A CSV----#
 
@@ -611,8 +652,14 @@ def analisys(datacube_name_list, analysis_folder_path, analysis_programme,
             csv_file_path.close()
             
         except Exception as e:
-            print(f'There is an error during filter analysis:'
-                  f'{e}')
+            
+            error_traceback = traceback.format_exc()
+            
+            print(f"\n\n--- ERROR during filter analysis ---")
+            print(f"Error Type: {type(e).__name__}") 
+            print(f"Error Message: {e}")           
+            print(f"Traceback:\n{error_traceback}")
+            
             
         #----ORGANIZING ALL THE CREATED FILES INTO NEW FOLRDES----#
         
