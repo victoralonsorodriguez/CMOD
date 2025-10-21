@@ -7,7 +7,7 @@ def constraints_values():
     n_range = (0.6,6)
     re_range = (1,600)
     mag_range = (-1.0,1.0)
-    xy_range = (-2.0,2.0)
+    xy_range = (-1.0,1.0)
     q_range = (0,1)
     pa_range = (-90.00,90.00)
 
