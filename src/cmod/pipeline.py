@@ -14,6 +14,7 @@ import shutil
 import mmap
 import struct
 import traceback
+import multiprocessing
 
 import pdb
 import time
@@ -70,13 +71,6 @@ def run_analysis_pipeline():
                 datacube_folder_path_list.append(path)
     
     for path_pos,path in enumerate(datacube_folder_path_list): 
-        
-        # Changing the directory to obtain the original path
-        # os.chdir(path)
-        # cwd_galaxy = os.getcwd()
-        
-        # Returning to the scripts directory
-        # os.chdir(PATH_SRC_CMOD)
 
         # Galaxy name obtaiane from datacube directories
         galaxy_name = (datacube_folder_name_list[path_pos].split('/')[-1]).split('_')[0]
@@ -220,7 +214,32 @@ def run_analysis_pipeline():
         # in the new version directory
         csv_folder_path = f'{analysis_folder_path}/{csv_folder_name}'
         create_folder(csv_folder_path,overwrite=False)
+        
+        ###------------------PREPARING PARALELIZATION------------------###
+        ##################################################################
+        
+        tasks_args_galaxy = []
+        for datacube_name in datacube_name_list:
+            
+            # Following argumens are given to each datacube
+            # They are global for all the datacubes
+            args_for_this_datacube = (
+                datacube_name, analysis_folder_path, analysis_programme,
+                datacube_original_folder_path, pxsc_zcal_const, analysis_range,
+                crop_factor, initial_conditions_mode, galaxy_name,
+                psf_fits_name, constraints_file_name, csv_folder_path,
+                analysis_folder_name, analysis_version, zcal_const, ori_pixel_scale,
+                PATH_SRC_CMOD
+            )
+            tasks_args_galaxy.append(args_for_this_datacube)
+            
+        # Selecting the cpu cores for the parallelization
+        num_cpu_workers = max(1, multiprocessing.cpu_count() - 2)
+        print(f"\n--- Parallel analysis for {galaxy_name} using {num_cpu_workers} cores ---")
 
+        # Store None if the process are finished
+        results_galaxy = []
+        
         ################################################################
         ###------------------ANALYSYS CODE FUNCTION------------------###
         ################################################################
@@ -228,14 +247,22 @@ def run_analysis_pipeline():
         try:
             print(f'\nAnalysing {galaxy_name} with {analysis_programme} '
                     f'in the run {next_version}')
+            
             # The analysis is carried out for each datacube
-            for datacube_pos,datacube_name in enumerate(datacube_name_list):
+            """
+            for datacube_name in datacube_name_list:
                 datacube_analisys(datacube_name, analysis_folder_path, analysis_programme, 
                         datacube_original_folder_path, pxsc_zcal_const, analysis_range, 
                         crop_factor, initial_conditions_mode, galaxy_name, 
                         psf_fits_name, constraints_file_name, csv_folder_path,
                         analysis_folder_name,analysis_version,zcal_const,ori_pixel_scale,
                         PATH_SRC_CMOD)
+            """
+            
+            # Parallelization the process
+            with multiprocessing.Pool(processes=num_cpu_workers) as pool:
+                results_galaxy = pool.starmap(datacube_analisys, tasks_args_galaxy)
+                        
             print(f'\nThe analysis for {galaxy_name} with {analysis_programme} '
                     f'in the run {next_version} has finished')
             
